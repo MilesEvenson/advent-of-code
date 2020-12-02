@@ -1,4 +1,4 @@
-const nums = require('./day_1.1.data');
+const nums = require('./day_1.data');
 
 // First attempt: brute force
 // Time complexity:   O(N^2)
