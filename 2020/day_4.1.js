@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 
+const CHAR_a = 97;
+const CHAR_z = 122;
+
 function getRawData() {
   const datafile = path.resolve(__dirname, 'day_4.data.txt');
   const rawData = fs.readFileSync(datafile, { encoding: 'UTF-8' });
@@ -20,42 +23,47 @@ function getRequiredFields() {
   };
 }
 
-function isValid(chunk) {
-  if (chunk.length < 5) {
-    return false;
-  }
-
-  const fields = getRequiredFields();
-
-  let c = 0;
-  while (c < chunk.length) {
-    if (chunk[c] === ':') {
-      fields[chunk.substring((c-3), c)] = true;
-    }
-    c++;
-  }
-
-  const hasAllRequiredFields = Object.values(fields).reduce(
-    (hasAll, exists) => (hasAll && exists),
-    true
-  );
-
-  return hasAllRequiredFields;
-}
-
 
 function main() {
   const rawData = getRawData();
-  const chunks = rawData
-    .split(/[\r\n]{2,}/);
 
   let countValid = 0;
-  let i = 0;
-  while (i < chunks.length) {
-    if (isValid(chunks[i])) {
+
+  let c = 1;
+  let fields = {};
+  let inSequence = false;
+  let hasAllRequiredFields = false;
+
+  while (c < rawData.length) {
+    if (!inSequence && CHAR_a <= rawData.charCodeAt(c) && rawData.charCodeAt(c) <= CHAR_z) {
+      inSequence = true;
+      fields = getRequiredFields();
+    } else if (rawData[c] === ':') {
+      fields[rawData.substring((c-3), c)] = true;
+    } else if (inSequence
+      && (rawData[c-1] === '\n' || rawData[c-1] === '\r')
+      && (rawData[c] === '\n' || rawData[c] === '\r')
+    ) {
+      inSequence = false;
+      hasAllRequiredFields = Object.values(fields).reduce(
+        (hasAll, exists) => (hasAll && exists),
+        true
+      );
+      if (hasAllRequiredFields) {
+        countValid++;
+      }
+    }
+
+    c++;
+  }
+  if (inSequence) {
+    hasAllRequiredFields = Object.values(fields).reduce(
+      (hasAll, exists) => (hasAll && exists),
+      true
+    );
+    if (hasAllRequiredFields) {
       countValid++;
     }
-    i++;
   }
 
   console.log(`Found ${countValid} valid passports`);
