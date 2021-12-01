@@ -35,9 +35,9 @@ function getDepths(): number[] {
 }
 
 
-function countDepthIncreases(scanReport: number[]): number {
+function processMeasurements(scanReport: number[]): string[] {
   if (scanReport.length === 0) {
-    return 0;
+    return [];
   }
   
   let prevDepth: number = scanReport[0];
@@ -54,9 +54,13 @@ function countDepthIncreases(scanReport: number[]): number {
     prevDepth = scanReport[i];
   }
 
+  return deltas;
+}
+
+function countDepthIncreases(deltas: string[]): number {
   const countIncreased = deltas.reduce(
-    (sum, delta): number => {
-      if (delta === 'increased') {
+    (sum, d): number => {
+      if (d === 'increased') {
         return (sum + 1);
       }
       return sum;
@@ -71,7 +75,8 @@ function countDepthIncreases(scanReport: number[]): number {
 function day1_1(): void {
   console.log('Welcome to Day 1.1');
   const depthMeasurements = getDepths();
-  const count = countDepthIncreases(depthMeasurements);
+  const deltas = processMeasurements(depthMeasurements);
+  const count = countDepthIncreases(deltas);
   console.log(`The depth increased ${count} times.`);
 }
 
