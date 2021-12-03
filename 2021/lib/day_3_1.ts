@@ -57,12 +57,14 @@ function getDiagnostic(): number[] {
 
 
 function countDiagnosticBits(numbers: number[]): number[][] {
+  // Find the largest number in the set so I
+  // know how many places I'll be counting.
+  const maxNum = numbers.reduce((max, n) => ((max < n) ? n : max), 0);
+  const exp = Math.ceil(Math.log2(maxNum));
   // Store bit counts in "reverse" order:
   // least-significant bit in "leftmost" index 0.
   // This makes looping a little simpler.
   const counts: number[][] = [];
-  const maxNum = numbers.reduce((max, n) => ((max < n) ? n : max), 0);
-  const exp = Math.ceil(Math.log2(maxNum));
   for (let i = 0; i < exp; i++) {
     counts.push([0, 0]);
   }
