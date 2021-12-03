@@ -60,7 +60,6 @@ interface Trie {
   zeroes: Trie | null;
   ones: Trie | null;
   countChildren: number;
-  depth: number;
   value: string;
 };
 
