@@ -6,6 +6,12 @@ import RawDiagnostic from './day_3.input';
 //  Check least-significant bit in each number,
 //  update counts for that position,
 //  then shift right.
+//
+// Having completed 3.2, I think the binary math
+// in this solution is unnecessary. I should have
+// simply processed the characters one-by-one instead
+// of all the integer conversion and arithmatic.
+//
 // Time complexity:   O(N)
 // Space complexity:  O(N)
 //
