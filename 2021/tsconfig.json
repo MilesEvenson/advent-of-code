@@ -3,6 +3,10 @@
   "compilerOptions": {
     "allowJs": false,
     "declaration": false,
+    "lib": [
+      "es2020",
+      "DOM"
+    ],
     "module": "CommonJS",
     "moduleResolution": "node",
     "noImplicitAny": true,    
