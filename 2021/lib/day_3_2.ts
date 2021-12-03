@@ -3,6 +3,15 @@ import RawDiagnostic from './day_3.input';
 
 //
 // First attempt:
+//  Build a trie of binary strings,
+//  then execute a separate function for each type of rating
+//  to traverse to the bottom of the trie, building a string
+//  of binary digits.
+//
+// Second attempt:
+//  Same high-level plan, but break out rating-specific logic
+//  into separate functions that can be passed to a generic
+//  calculateRating() traversal function.
 //
 // Complexity Analysis:
 //    R: number of rows
@@ -13,11 +22,13 @@ import RawDiagnostic from './day_3.input';
 //    Calc Ratings:   O(2L)
 //
 // Space complexity:
-//    Full input data:  O(R*L)
-//    Trie:             O(2^(L+1) - 1)
-//                      (Worst case is a full binary tree of depth L)
+//    Complete input data:  O(R*L)
+//    Trie:                 O(2^(L+1) - 1)
+//                          (Worst case is a full binary tree of depth L)
 //
-// Total time: 120 minutes
+// Total time: ~155 minutes
+//  First attempt:    120 minutes
+//  Second attempt:   ~35 minutes
 //  
 //
 
@@ -79,7 +90,7 @@ function buildTrie(rawLines: string[]): Trie {
 
   return rawLines.reduce(
     (trie: Trie, line: string): Trie => {
-      console.log(`Processing line: ${line}`);
+      //console.log(`Processing line: ${line}`);
       let nextDigit = '';
       let node = trie;
 
@@ -122,51 +133,79 @@ function buildTrie(rawLines: string[]): Trie {
 }
 
 
-function calculateGeneratorRatings(root: Trie): number {
-  const digits: string[] = [];
-  let node: Trie | null = root;
-  let countZeroes = 0;
-  let countOnes = 0;
+function generatorShouldGetZeroes(
+  node: Trie,
+  countZeroes: number,
+  countOnes: number,
+): boolean {
+  let shouldGetZeroes = false;
 
-  while (node) {
-    digits.push(node.value);
-    console.log('processing node:');
-    console.dir(node, { depth: 0 });
-    countZeroes = 0;
-    countOnes = 0;
-    if (node.zeroes) {
-      countZeroes = node.zeroes.countChildren ?? 0;
-    }
-    if (node.ones) {
-      countOnes = node.ones.countChildren ?? 0;
-    }
-
-    if (!node.zeroes) {
-      console.log('Current node does not have child zeroes, move to ONE branch');
-      node = node.ones;
-    } else if (!node.ones) {
-      console.log('Current node does not have child ones, move to ZERO branch');
-      node = node.zeroes;
-    } else if (countZeroes <= countOnes) {
-      console.log(`${countZeroes}(0) <= ${countOnes}(1), moving to ONE branch`);
-      node = node.ones;
-    } else if (countOnes < countZeroes) {
-      console.log(`${countOnes}(1) < ${countZeroes}(0), moving to ZERO branch`);
-      node = node.zeroes;
-    } else {
-      console.warn('Entered a bad state', {node, digits});
-    }
+  if (!node.ones) {
+    shouldGetZeroes = true;
+  } else if (node.zeroes && countOnes < countZeroes) {
+    shouldGetZeroes = true;
   }
 
-  console.log('Build digit array:', digits);
-
-  return parseInt(digits.join(''), 2);
+  return shouldGetZeroes;
 }
 
 
-// TODO:  Consider abstracting the comparison logic so I can
-//        have one generic version of this function.
-function calculateScrubberRatings(root: Trie): number {
+function generatorShouldGetOnes(
+  node: Trie,
+  countZeroes: number,
+  countOnes: number,
+): boolean {
+  let shouldGetOnes = false;
+
+  if (!node.zeroes) {
+    shouldGetOnes = true;
+  } else if (node.ones && countZeroes <= countOnes) {
+    shouldGetOnes = true;
+  }
+
+  return shouldGetOnes;
+}
+
+
+function scrubberShouldGetZeroes(
+  node: Trie,
+  countZeroes: number,
+  countOnes: number,
+): boolean {
+  let shouldGetZeroes = false;
+
+  if (!node.ones) {
+    shouldGetZeroes = true;
+  } else if (node.zeroes && countZeroes <= countOnes) {
+    shouldGetZeroes = true;
+  }
+
+  return shouldGetZeroes;
+}
+
+
+function scrubberShouldGetOnes(
+  node: Trie,
+  countZeroes: number,
+  countOnes: number,
+): boolean {
+  let shouldGetOnes = false;
+
+  if (!node.zeroes) {
+    shouldGetOnes = true;
+  } else if (node.ones && countOnes < countZeroes) {
+    shouldGetOnes = true;
+  }
+
+  return shouldGetOnes;
+}
+
+
+function calculateRating(
+  root: Trie,
+  shouldGetZeroes: (a: Trie, b: number, c: number) => boolean,
+  shouldGetOnes: (a: Trie, b: number, c: number) => boolean,
+): number {
   const digits: string[] = [];
   let node: Trie | null = root;
   let countZeroes = 0;
@@ -174,35 +213,20 @@ function calculateScrubberRatings(root: Trie): number {
 
   while (node) {
     digits.push(node.value);
-    console.log('processing node:');
-    console.dir(node, { depth: 0 });
-    countZeroes = 0;
-    countOnes = 0;
-    if (node.zeroes) {
-      countZeroes = node.zeroes.countChildren ?? 0;
-    }
-    if (node.ones) {
-      countOnes = node.ones.countChildren ?? 0;
-    }
 
-    if (!node.zeroes) {
-      console.log('Current node does not have child zeroes, move to ONE branch');
-      node = node.ones;
-    } else if (!node.ones) {
-      console.log('Current node does not have child ones, move to ZERO branch');
+    countZeroes = node.zeroes?.countChildren ?? 0;
+    countOnes = node.ones?.countChildren ?? 0;
+
+    if (shouldGetZeroes(node, countZeroes, countOnes)) {
       node = node.zeroes;
-    } else if (countZeroes <= countOnes) {
-      console.log(`${countZeroes}(0) < ${countOnes}(1), moving to ZERO branch`);
-      node = node.zeroes;
-    } else if (countOnes < countZeroes) {
-      console.log(`${countOnes}(1) <= ${countZeroes}(0), moving to ONE branch`);
+    } else if (shouldGetOnes(node, countZeroes, countOnes)) {
       node = node.ones;
     } else {
-      console.warn('Entered a bad state', {node, digits});
+      //console.warn('Done with loop');
+      break;
     }
-  }
 
-  console.log('Build digit array:', digits);
+  }
 
   return parseInt(digits.join(''), 2);
 }
@@ -210,15 +234,27 @@ function calculateScrubberRatings(root: Trie): number {
 
 function day3_2(): void {
   console.log('Welcome to Day 3.2. Today is trie day!');
+
   const rawLines = loadData();
   const trie = buildTrie(rawLines);
-  console.dir(trie, { depth: null });
-  console.log('Calculating Oxygen Generator rating');
-  const generatorRating = calculateGeneratorRatings(trie);
-  console.log('Calculating CO2 Scrubber rating');
-  const scrubberRating = calculateScrubberRatings(trie);
+  //console.dir(trie, { depth: null });
+
+  //console.log('Calculating Oxygen Generator rating');
+  const generatorRating = calculateRating(
+    trie,
+    generatorShouldGetZeroes,
+    generatorShouldGetOnes
+  );
+
+  //console.log('Calculating CO2 Scrubber rating');
+  const scrubberRating = calculateRating(
+    trie,
+    scrubberShouldGetZeroes,
+    scrubberShouldGetOnes
+  );
+
   const product = scrubberRating * generatorRating;
-  console.log(`CO2 Scrubber (${scrubberRating}) * O2 Gen (${generatorRating}) => ${product}`);
+  console.log(`O2 Gen (${generatorRating}) * CO2 Scrubber (${scrubberRating}) => ${product}`);
 }
 
 
