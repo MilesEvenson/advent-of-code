@@ -11,7 +11,10 @@ import RawDiagnostic from './day_3.input';
 // Second attempt:
 //  Same high-level plan, but break out rating-specific logic
 //  into separate functions that can be passed to a generic
-//  calculateRating() traversal function.
+//  calculateRating() traversal function. Having done it,
+//  I like how the rating-specific logic is clearly labeled,
+//  but defining 2 functions for each rating type is arguably
+//  too verbose for a one-off script like this.
 //
 // Complexity Analysis:
 //    R: number of rows
@@ -68,23 +71,11 @@ function loadData(): string[] {
 }
 
 
-function parseNumber(strNum: string): number {
-  return parseInt(strNum, 2);
-}
-
-
-function getDiagnostic(): number[] {
-  const rawData = loadData();
-  return rawData.map(parseNumber);
-}
-
-
 function buildTrie(rawLines: string[]): Trie {
   const root: Trie = {
     zeroes: null,
     ones: null,
     countChildren: 0,
-    depth: -1,
     value: '',
   };
 
@@ -104,7 +95,6 @@ function buildTrie(rawLines: string[]): Trie {
               zeroes: null,
               ones: null,
               countChildren: 0,
-              depth: node.depth + 1,
               value: ZERO
             } as Trie;
           }
@@ -115,7 +105,6 @@ function buildTrie(rawLines: string[]): Trie {
               zeroes: null,
               ones: null,
               countChildren: 0,
-              depth: node.depth + 1,
               value: ONE
             } as Trie;
           }
@@ -237,7 +226,6 @@ function day3_2(): void {
 
   const rawLines = loadData();
   const trie = buildTrie(rawLines);
-  //console.dir(trie, { depth: null });
 
   //console.log('Calculating Oxygen Generator rating');
   const generatorRating = calculateRating(
