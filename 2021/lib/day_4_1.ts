@@ -6,14 +6,29 @@ import {
 
 //
 // First attempt:
+//  Brute Force!
+//  Run the naive approach, step-by-step.
+//
+//  Consider using a class in situations like this
+//  so I have cleaner shared sate, and I don't have
+//  to pass objects into functions by reference.
+//
 //
 // Complexity Analysis:
+//  B: number of boards
+//  R: rows per board
+//  C: columns per board
 //
 //  Time Complexity:
+//    O(B*R*C)
+//    For each new number, traverse every board looking for a match.
 //
-// Space complexity:
+//  Space complexity:
+//    O(B*R*C)
+//    Just a big 3-dimensional array
 //
-// Total time: ??? minutes
+//
+// Total time: ~90 minutes
 //  
 //
 
@@ -144,6 +159,7 @@ function updateAndCheckBoards(
           if (isWinner(boards[b], r, c)) {
             return b;
           }
+          // TODO: consider skipping to the next board here.
         }
       }
     }
