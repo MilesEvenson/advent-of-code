@@ -84,7 +84,8 @@ function formatBoard(board: Cell[][]): string {
 function* nextBall(): Generator<number> {
   let index = 0;
   while (index < SAMPLE_BALLS.length) {
-    yield SAMPLE_BALLS[index];
+    //yield SAMPLE_BALLS[index];
+    yield Balls[index];
     // TODO: is it advisable to put this increment before the yield?
     index++;
   }
