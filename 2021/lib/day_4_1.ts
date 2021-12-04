@@ -60,6 +60,26 @@ interface Cell {
 }
 
 
+function formatBoard(board: Cell[][]): string {
+  const rows = board.map(row => { 
+    const chunksRow = row.map(c => {
+      const chunksCell = [`${c.value}`];
+      if (c.isMarked) {
+        chunksCell.push('*');
+      } else {
+        chunksCell.push(' ');
+      }
+      chunksCell.unshift(' ');
+      if (c.value < 10) {
+        chunksCell.unshift(' ');
+      }
+      return chunksCell.join('');
+    });
+    return chunksRow.join(' ');
+  });
+  return rows.join('\n');
+}
+
 
 function* nextBall(): Generator<number> {
   let index = 0;
@@ -82,21 +102,82 @@ function loadBoards(): Cell[][][] {
 }
 
 
+function isWinner(
+  board: Cell[][],
+  row: number,
+  col: number
+): boolean {
+  const winnerRow = (
+    board[row][0].isMarked
+    && board[row][1].isMarked
+    && board[row][2].isMarked
+    && board[row][3].isMarked
+    && board[row][4].isMarked
+  );
+
+  const winnerCol = (
+    board[0][col].isMarked
+    && board[1][col].isMarked
+    && board[2][col].isMarked
+    && board[3][col].isMarked
+    && board[4][col].isMarked
+  );
+
+  return winnerRow || winnerCol;
+}
+
+
+function updateAndCheckBoards(
+  nextNumber: number,
+  boards: Cell[][][]
+): number {
+  for (let b = 0; b < boards.length; b++) {
+    for (let r = 0; r < boards[b].length; r++) {
+      for (let c = 0; c < boards[b][r].length; c++) {
+        if (boards[b][r][c].value === nextNumber) {
+          boards[b][r][c].isMarked = true;
+          if (isWinner(boards[b], r, c)) {
+            return b;
+          }
+        }
+      }
+    }
+  }
+  return -1;
+}
+
+
 function day4_1(): void {
   console.log('Welcome to Day 4.1. Roll those cages.');
 
   const boards = loadBoards();
-  console.dir(boards, { depth: null, maxArrayLength: null });
+  let winnerBoard = -1;
 
-  let cage = nextBall();
+  const cage = nextBall();
   let draw = cage.next();
   while (!draw.done) {
-    console.log(`drew (${draw.value})`);
+    // TODO: play bingo
+
+    winnerBoard = updateAndCheckBoards(draw.value, boards);
+    if (0 <= winnerBoard) {
+      break;
+    }
+
     draw = cage.next();
   }
 
-  const sumUnmarked = 0;
-  const lastNumber = 0;
+  console.log(formatBoard(boards[winnerBoard]));
+
+  const sumUnmarked = boards[winnerBoard].reduce(
+    (sumRow: number, row: Cell[]): number => (
+      sumRow + row.reduce(
+        (sumCol: number, cell: Cell): number => (sumCol + cell.value),
+        0
+      )
+    ),
+    0
+  );
+  const lastNumber = draw.value;
   const product = sumUnmarked * lastNumber;
   console.log(`Sum (${sumUnmarked}) * Last Number (${lastNumber}) => ${product}`);
 }
