@@ -28,7 +28,10 @@ import {
 //    Just a big 3-dimensional array
 //
 //
-// Total time: ~90 minutes
+// Total time:  ~90 minutes
+//              Includes some Slack distraction.
+//              and a little time spent writing a function
+//              to nicely format the boards.
 //  
 //
 
