@@ -84,7 +84,7 @@ function formatBoard(board: Cell[][]): string {
 function* nextBall(): Generator<number> {
   let index = 0;
   while (index < SAMPLE_BALLS.length) {
-    yield index;
+    yield SAMPLE_BALLS[index];
     // TODO: is it advisable to put this increment before the yield?
     index++;
   }
@@ -97,8 +97,8 @@ function parseBoard(grid: number[][]): Cell[][] {
 
 
 function loadBoards(): Cell[][][] {
-  return SAMPLE_BOARDS.map(parseBoard);
-  //return RawBoards.map(parseBoard);
+  //return SAMPLE_BOARDS.map(parseBoard);
+  return RawBoards.map(parseBoard);
 }
 
 
@@ -129,9 +129,13 @@ function isWinner(
 
 function updateAndCheckBoards(
   nextNumber: number,
+  // Passing boards by reference :(
   boards: Cell[][][]
 ): number {
+  console.log(`The draw is (${nextNumber})`);
+
   for (let b = 0; b < boards.length; b++) {
+    console.log('------------------------');
     for (let r = 0; r < boards[b].length; r++) {
       for (let c = 0; c < boards[b][r].length; c++) {
         if (boards[b][r][c].value === nextNumber) {
@@ -142,6 +146,7 @@ function updateAndCheckBoards(
         }
       }
     }
+    console.log(formatBoard(boards[b]));
   }
   return -1;
 }
@@ -166,14 +171,17 @@ function day4_1(): void {
     draw = cage.next();
   }
 
+  console.log('=========================');
   console.log(formatBoard(boards[winnerBoard]));
 
   const sumUnmarked = boards[winnerBoard].reduce(
-    (sumRow: number, row: Cell[]): number => (
-      sumRow + row.reduce(
-        (sumCol: number, cell: Cell): number => (sumCol + cell.value),
-        0
-      )
+    (sumRows, row) => (
+      sumRows + row
+        .filter(c => !c.isMarked)
+        .reduce(
+          (sumCol, cell) => (sumCol + cell.value),
+          0
+        )
     ),
     0
   );
