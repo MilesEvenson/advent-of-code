@@ -7,13 +7,14 @@
     "build": "tsc --build --verbose",
     "clean": "if [ -d ./dist ]; then rm -rf ./dist/*; fi",
     "cli": "if [ -f ./dist/cli.js ]; then node ./dist/cli.js; fi",
-    "copy": "cp -R ./lib/data ./dist/data",
+    "copy": "cp -R ./lib/data ./dist/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "miles.evenson@gmail.com",
   "license": "ISC",
   "devDependencies": {
     "@tsconfig/node14": "^1.0.1",
+    "@types/node": "^16.11.11",
     "ts-loader": "^9.2.6",
     "typescript": "^4.5.2"
   }
