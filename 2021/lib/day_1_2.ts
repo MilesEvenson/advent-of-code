@@ -1,4 +1,4 @@
-import DepthMeasurements from './day_1_2.input';
+import DepthMeasurements from './data/day_1_2.input';
 
 
 //

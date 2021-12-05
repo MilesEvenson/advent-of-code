@@ -7,6 +7,7 @@
     "build": "tsc --build --verbose",
     "clean": "if [ -d ./dist ]; then rm -rf ./dist/*; fi",
     "cli": "if [ -f ./dist/cli.js ]; then node ./dist/cli.js; fi",
+    "copy": "cp -R ./lib/data ./dist/data",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "miles.evenson@gmail.com",

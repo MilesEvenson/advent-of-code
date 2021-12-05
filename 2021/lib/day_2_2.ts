@@ -1,4 +1,4 @@
-import RawInstructions from './day_2.input';
+import RawInstructions from './data/day_2.input';
 
 
 //

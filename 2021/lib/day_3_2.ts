@@ -1,4 +1,4 @@
-import RawDiagnostic from './day_3.input';
+import RawDiagnostic from './data/day_3.input';
 
 
 //

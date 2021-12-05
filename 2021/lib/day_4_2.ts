@@ -1,7 +1,7 @@
 import {
   Balls,
   RawBoards,
-} from './day_4.input';
+} from './data/day_4.input';
 
 
 //
