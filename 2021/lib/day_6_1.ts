@@ -61,7 +61,8 @@ function day6_1(): void {
 
   // Load fish from input
   // Populate the array
-  // For each day, walk from end to head
+  // For each day, move each cohort one step closer to reproduction,
+  // then reset that cohort's clock.
   // Sum!
 
   const MAX_DAYS = 80;
