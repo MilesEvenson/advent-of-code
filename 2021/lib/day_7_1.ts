@@ -10,6 +10,10 @@ import path from 'path';
 //  No idea if this is a robust solution.
 //  I do not have the math knowledge to explore this approach.
 //
+//  UPDATE FROM THE AFTERNOON ON DEC 7
+//  I really like this explanation of why the median yields the smallest sum:
+//    https://math.stackexchange.com/a/113336
+//
 //
 // Complexity Analysis:
 //  N: number of crab subs
