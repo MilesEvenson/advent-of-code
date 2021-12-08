@@ -66,79 +66,6 @@ function setFromChunk(chunk: string): Set<string> {
 }
 
 
-function getHTop(
-  digitDefs: Set<string>[],
-  segmentCounts: Record<string, number>
-): string {
-  for (const c of digitDefs[7]) {
-    if (!digitDefs[1].has(c)) {
-      return c;
-    }
-  }
-  throw new Error('Could not determine hTop');
-}
-
-
-function getHMid(
-  digitDefs: Set<string>[],
-  segmentCounts: Record<string, number>
-): string {
-  return Object.keys(segmentCounts)
-    .find(k => (
-      segmentCounts[k] === 7 && digitDefs[4].has(k)
-    )) as string;
-}
-
-
-function getHBot(
-  digitDefs: Set<string>[],
-  segmentCounts: Record<string, number>
-): string {
-  return Object.keys(segmentCounts)
-    .find(k => (
-      segmentCounts[k] === 7 && !digitDefs[4].has(k)
-    )) as string;
-}
-
-
-function getVTL(
-  digitDefs: Set<string>[],
-  segmentCounts: Record<string, number>
-): string {
-  return Object.keys(segmentCounts)
-    .find((c: string) => segmentCounts[c] === 6) as string;
-}
-
-
-function getVTR(
-  digitDefs: Set<string>[],
-  segmentCounts: Record<string, number>
-): string {
-  return Object.keys(segmentCounts)
-    .find(k => (
-      segmentCounts[k] === 8 && digitDefs[1].has(k)
-    )) as string;
-}
-
-
-function getVBL(
-  digitDefs: Set<string>[],
-  segmentCounts: Record<string, number>
-): string {
-  return Object.keys(segmentCounts)
-    .find((c: string) => segmentCounts[c] === 4) as string;
-}
-
-
-function getVBR(
-  digitDefs: Set<string>[],
-  segmentCounts: Record<string, number>
-): string {
-  return Object.keys(segmentCounts)
-    .find((c: string) => segmentCounts[c] === 9) as string;
-}
-
-
 function deduceDigits(rawDefinitions: string): Set<string>[] {
   // Plan A:
   //  Make two passes:
@@ -208,13 +135,31 @@ function deduceDigits(rawDefinitions: string): Set<string>[] {
     }
   }
 
-  const hTop = getHTop(definitions, segmentCounts);
-  const hMid = getHMid(definitions, segmentCounts);
-  const hBot = getHBot(definitions, segmentCounts);
-  const vTL = getVTL(definitions, segmentCounts);
-  const vTR = getVTR(definitions, segmentCounts);
-  const vBL = getVBL(definitions, segmentCounts);
-  const vBR = getVBR(definitions, segmentCounts);
+  let hTop = '';
+  let hMid = '';
+  let hBot = '';
+  let vTL = '';
+  let vTR = '';
+  let vBL = '';
+  let vBR = '';
+
+  for (const [c, count] of Object.entries(segmentCounts)) {
+    if (count === 8 && !definitions[1].has(c)) {
+      hTop = c;
+    } else if (count == 7 && definitions[4].has(c)) {
+      hMid = c;
+    } else if (count == 7 && !definitions[4].has(c)) {
+      hBot = c;
+    } else if (count == 6) {
+      vTL = c;
+    } else if (count == 8 && definitions[1].has(c)) {
+      vTR = c;
+    } else if (count == 4) {
+      vBL = c;
+    } else if (count == 9) {
+      vBR = c;
+    }
+  }
 
   //console.log(hTop, hMid, hBot, vTL, vTR, vBL, vBR);
 
@@ -266,10 +211,10 @@ function day8_2(): void {
         rawDefinitions,
         rawDigits,
       ] = line.split(' | ');
-      console.log(rawDigits);
+      //console.log(rawDigits);
       const defs = deduceDigits(rawDefinitions);
       const numbers = parseNumbers(rawDigits, defs);
-      console.log(numbers.join(''));
+      //console.log(numbers.join(''));
       return sum + parseInt(numbers.join(''), 10);
     },
     0
