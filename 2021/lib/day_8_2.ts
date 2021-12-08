@@ -115,8 +115,6 @@ function deduceDigits(rawDefinitions: string): Set<string>[] {
 
   //console.dir(segmentCounts);
 
-  // Specify 'as string' to reassure the TypeScript compiler that
-  // find() is always returning a string (and not string | undefined).
   for (let u = 0; u < chunks.length; u++) {
     switch (chunks[u].length) {
       case 2:
