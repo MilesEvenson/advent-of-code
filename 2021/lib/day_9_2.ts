@@ -67,14 +67,7 @@ function loadGrid(): number[][] {
 }
 
 
-interface BasinCell {
-  row: number;
-  col: number;
-  height: number;
-}
-
-
-interface Node {
+interface Cell {
   row: number;
   col: number;
 }
@@ -103,12 +96,12 @@ function day9_2(): void {
 
   //grid.forEach(row => console.log(row.join('')));
 
-  const basins: BasinCell[][] = [];
+  const basins: Cell[][] = [];
   const visited: Set<string> = new Set();
-  const queue: Node[] = [];
+  const queue: Cell[] = [];
   let slug = '';
-  let newBasin: BasinCell[] = [];
-  let node: Node;
+  let newBasin: Cell[] = [];
+  let node: Cell;
 
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
@@ -119,7 +112,7 @@ function day9_2(): void {
         queue.push({ row: r, col: c });
 
         while (0 < queue.length) {
-          node = queue.shift() as Node;
+          node = queue.shift() as Cell;
           if (!visited.has(getSlug(node.row, node.col))) {
             if (0 < node.row
               && grid[node.row-1][node.col] != 9
@@ -156,7 +149,6 @@ function day9_2(): void {
             newBasin.push({
               row: node.row,
               col: node.col,
-              height: grid[node.row][node.col],
             });
           } else {
             console.log(`Skipping cell (${getSlug(node.row, node.col)}) because it has already been visited.`);
