@@ -4,16 +4,24 @@ import path from 'path';
 
 //
 // First attempt:
-//
+//  Traverse the grid, checking each cell
+//  to see if it is a local minimum.
+//  If it is, add it to the list of low points.
+//  Finally, sum the list of low points.
 //
 // Complexity Analysis:
+//  C: total number of cells in the grid
 //
 //  Time Complexity:
+//    O(C)
+//    Proces each cell in the grid once.
 //
 //  Space complexity:
+//    O(C)
+//    Store the entire grid in memory.
 //
 //
-// Total time:  ??? minutes
+// Total time:  ~15 minutes
 //
 
 
@@ -41,7 +49,7 @@ function getLines(): string[] {
 
 
 function day9_1(): void {
-  console.log('Welcome to Day 9.1. Tubular.');
+  console.log('Welcome to Day 9.1. Hitting all the low points.');
 
   const grid: number[][] = getLines().map(rawLine => {
     const nums = [];
