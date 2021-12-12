@@ -75,7 +75,7 @@ function getLines(): string[] {
   } else if (process.env.SOURCE === 'LARGE') {
     rawLines = SAMPLE_LARGE;
   } else if (process.env.SOURCE === 'FULL') {
-    const buffInput = fs.readFileSync(path.join(__dirname, 'data', 'day_11.input.txt'));
+    const buffInput = fs.readFileSync(path.join(__dirname, 'data', 'day_12.input.txt'));
     rawLines = buffInput.toString()
       .trim()
       .split('\n');
@@ -89,13 +89,13 @@ interface Cave {
   id: string;
   isBig: boolean;
   links: Cave[];
-  visits: number;
 }
 
 
 interface Node {
+  children: Node[];
   id: string;
-  children: string[];
+  visitedSmalls: Record<string, string>;
 }
 
 
@@ -103,28 +103,28 @@ function loadCaves(): Record<string, Cave> {
   const lines = getLines();
   return lines.reduce(
     (dict, rawLine): Record<string, Cave> => {
-      const [ source, dest ] = rawLine.split('-');
-      if (!dict.hasOwnProperty(source)) {
-        dict[source] = {
-          id: source,
-          isBig: (65 <= source.charCodeAt(0) && source.charCodeAt(0) <= 90),
-          links: [dest],
-          visits: 0,
-        };
-      } else {
-        dict[source].links.push(dest);
+      const [ idSource, idDest ] = rawLine.split('-');
+
+      const caveSource: Cave = {
+        id: idSource,
+        isBig: (65 <= idSource.charCodeAt(0) && idSource.charCodeAt(0) <= 90),
+        links: [],
+      };
+      const caveDest: Cave = {
+        id: idDest,
+        isBig: (65 <= idDest.charCodeAt(0) && idDest.charCodeAt(0) <= 90),
+        links: [],
+      };
+
+      if (!dict.hasOwnProperty(idSource)) {
+        dict[idSource] = caveSource;
+      }
+      if (!dict.hasOwnProperty(idDest)) {
+        dict[idDest] = caveDest;
       }
 
-      if (!dict.hasOwnProperty(dest)) {
-        dict[dest] = {
-          id: dest,
-          isBig: (65 <= dest.charCodeAt(0) && dest.charCodeAt(0) <= 90),
-          links: [source],
-          visits: 0,
-        };
-      } else {
-        dict[dest].links.push(source);
-      }
+      dict[idSource].links.push(caveDest);
+      dict[idDest].links.push(caveSource);
 
       return dict;
     },
@@ -154,6 +154,7 @@ function day12_1(): void {
   const root: Node = {
     id: 'start',
     children: [],
+    visitedSmalls: {},
   };
   const queue: Node[] = [ root ];
   let node: Node;
@@ -163,27 +164,46 @@ function day12_1(): void {
     // shift off the next node
     node = queue.shift() as Node;
 
-    caves[node.id].links.forEach(cn => {
+    caves[node.id].links.forEach(caveNext => {
       const newChild: Node = {
-        id: cn,
+        id: caveNext.id,
         children: [],
+        visitedSmalls: { ...node.visitedSmalls },
       };
-      if (caves[cn].isBig) {
-        // TODO: Be extra safe and don't visit a Big cave from a Big cave (avoid cycles!)
+
+      if (!caves[node.id].isBig) {
+        newChild.visitedSmalls[node.id] = node.id;
+      }
+
+      // Only proceed to a Big cave from a small cave to avoid a Big-Big cycle.
+      if (caves[caveNext.id].isBig && !caves[node.id].isBig) {
         node.children.push(newChild);
-        if (cn != 'end') {
+        if (caveNext.id != 'end') {
           queue.push(newChild);
+        } else {
+          totalPaths++;
         }
-      } else if (!caves[cn].isBig && !caves[cn].has_been_visited_in_this_path) {
-// TODO: how to track if the child has been visited in this path?!
-        // TODO: don't go to a zero-link small from a small
+      } else if (
+        !caves[caveNext.id].isBig
+        && !node.visitedSmalls.hasOwnProperty(caveNext.id)
+        && (
+          caves[node.id].isBig
+          || 1 < caves[caveNext.id].links.length
+        )
+      ) {
         node.children.push(newChild);
-        if (cn != 'end') {
+        if (caveNext.id != 'end') {
           queue.push(newChild);
+        } else {
+          totalPaths++;
         }
       }
     });
+    // TODO
+    node.visitedSmalls = {};
   }
+
+  console.dir(root, { depth: null, maxArrayLength: null });
 
 
   console.log(`Found (${totalPaths}) total paths through the caves`);
