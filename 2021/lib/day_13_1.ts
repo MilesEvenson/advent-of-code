@@ -100,6 +100,11 @@ function getLines(): string[] {
     rawLines = buffInput.toString()
       .trim()
       .split('\n');
+  } else if (process.env.SOURCE === 'GENGHIS') {
+    const buffInput = fs.readFileSync(path.join(__dirname, 'data', 'day_13.genghis.input.dots.txt'));
+    rawLines = buffInput.toString()
+      .trim()
+      .split('\n');
   }
 
   return rawLines;
@@ -138,6 +143,11 @@ function getInstructions(): string[] {
   let rawLines = SAMPLE_INSTRUCTIONS;
   if (process.env.SOURCE === 'FULL') {
     const buffInput = fs.readFileSync(path.join(__dirname, 'data', 'day_13.input.instructions.txt'));
+    rawLines = buffInput.toString()
+      .trim()
+      .split('\n');
+  } else if (process.env.SOURCE === 'GENGHIS') {
+    const buffInput = fs.readFileSync(path.join(__dirname, 'data', 'day_13.genghis.input.instructions.txt'));
     rawLines = buffInput.toString()
       .trim()
       .split('\n');
@@ -243,6 +253,7 @@ function day13_1(): void {
   // too low: 101
   // too low: 102
   // too low: 105
+
 
   console.log(`Found (${totalDots}) total dots after (${SAMPLE_INSTRUCTIONS.length}) folds.`);
 }
