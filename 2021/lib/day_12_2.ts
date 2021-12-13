@@ -47,7 +47,15 @@ import path from 'path';
 //    Store a node for each cave in each path.
 //
 //
+<<<<<<< HEAD
 // Total time: way over par on this one :(
+=======
+// Total time:  ~360 minutes (a painful number to type)
+//  Planning       0
+//                Planning blurred into writing for 12.2.
+//  Programming  135 
+//  Debugging    225
+>>>>>>> 58a1ed9 ([2021] - Day 12.1 12.2 - Add notes)
 //
 
 
