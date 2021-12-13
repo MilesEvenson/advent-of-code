@@ -191,7 +191,7 @@ function printGrid(
 
 
 function day13_1(): void {
-  console.log('Welcome to Day 13.1. Hope there are no adjacent big caves.');
+  console.log('Welcome to Day 13.1. Make clean folds out there.');
 
 
   const grid = loadGrid();
@@ -223,8 +223,9 @@ function day13_1(): void {
     }
     //console.log('\n');
     //printGrid(grid, inst, false);
-    break;
   }
+
+  printGrid(grid, {axis:'x', offset: 0}, false);
 
 
   const distinctCoords = grid.dots.reduce(
