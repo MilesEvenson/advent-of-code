@@ -167,20 +167,13 @@ function day12_2(): void {
       smallVisitCap = 1;
     }
 
-    console.log(`      current cave (${currentId}) ${(caves[currentId].isBig ? 'is' : 'is not')} big and has (${caves[currentId].visits}) visits and has (${caves[currentId].links.length}) links.`);
-    console.log(`      next cave (${nextId}) ${(caves[nextId].isBig ? 'is' : 'is not')} big and has (${caves[nextId].visits}) visits and has (${caves[nextId].links.length}) links.`);
-    console.log(`      smallVisitCap (${smallVisitCap})`);
-
     if (currentId == nextId) {
-      console.log('        no, cannot visit self');
       return false;
     }
 
     if (nextId == 'end') {
-      console.log('        yes');
       return true;
     } else if (caves[nextId].isBig) {
-      console.log('        yes');
       return true;
     } else if (
       !caves[nextId].isBig
@@ -196,34 +189,24 @@ function day12_2(): void {
         )
       )
     ) {
-      console.log('        yes');
       return true;
     }
-    console.log('        no');
     return false;
   }
 
 
   const caves = loadCaves();
 
-  let totalPaths = 0;
-
   const root: Node = {
     id: 'start',
     index: -1,
   };
 
-  const stack: Node[] = [
-    root,
-    // Hack to get the stack started. May not be necessary?
-    {
-      id: caves[root.id].links[caves[root.id].links.length-1].id,
-      index: caves[root.id].links.length - 1,
-    },
-  ];
+  const stack: Node[] = [ root ];
   let node: Node;
   let tip = stack.length - 1;
-  const paths: string[] = [];
+  //const paths: string[] = [];
+  let totalPaths = 0;
   let remainingLinks = 0;
   let nextId = '';
   let nextIndex = -1;
@@ -231,27 +214,21 @@ function day12_2(): void {
   let repeatSmallVisitExists = false;
 
   while (0 < stack.length) {
-    console.log('\n\n');
-    console.log(stack.map(n => `(${n.id}, ${n.index}, ${caves[n.id].visits})`).join(', '));
-    //node = stack[tip];
     nextId = '';
     nextIndex = -1;
     deadEnd = false;
 
     if (!caves[stack[tip].id].isBig && stack[tip].id != 'end') {
       caves[stack[tip].id].visits++;
-      console.log(`Processing (${stack[tip].id}). This is visit (${caves[stack[tip].id].visits}).`);
       if (2 <= caves[stack[tip].id].visits) {
         repeatSmallVisitExists = true;
-        console.log('  there is now a repeat small visit on record');
       }
     }
 
-
     if (stack[tip].id == 'end') {
       deadEnd = true;
-      paths.push(stack.map(n => n.id).join(', '));
-      console.log(`  Found an exit. Backtracking`);
+      //paths.push(stack.map(n => n.id).join(', '));
+      totalPaths++;
     } else {
       nextIndex = caves[stack[tip].id].links.length - 1;
       while (0 <= nextIndex) {
@@ -264,16 +241,11 @@ function day12_2(): void {
       if (0 <= nextIndex) {
         nextId = caves[stack[tip].id].links[nextIndex].id;
       } else {
-        console.log(`  Cave (${stack[tip].id}, ${stack[tip].index}, ${caves[stack[tip].id].visits}) is a dead end. Backtracking.`);
         deadEnd = true;
       }
     }
 
     if (deadEnd) {
-      // Hacky way to get out of the stack processing loop.
-      //if (stack.length == 1) {
-      //  break;
-      //}
       node = stack.pop() as Node;
       tip--;
       remainingLinks = node.index;
@@ -287,18 +259,13 @@ function day12_2(): void {
         nextIndex--;
       }
 
-      //console.log(`    Starting backtrack with node (${node.id}, ${node.index}, ${caves[node.id].visits}), next (${nextId} ${nextIndex} ${caves[nextId].visits}), remainingLinks (${remainingLinks})`);
-
       while (node.index == 0 || remainingLinks == 0) {
-        console.log('    (' + remainingLinks + ') ' + stack.map(n => `{${n.id}, ${n.index}, ${caves[n.id].visits}}`).join(', '));
         node = stack.pop() as Node;
         tip--;
 
         if (!caves[node.id].isBig && node.id != 'end') {
           caves[node.id].visits--;
-          console.log(`Popping (${node.id}). It now has visits (${caves[node.id].visits}).`);
           if (caves[node.id].visits == 1) {
-            console.log('  Popped a repeat visit. There is not a repeat small visit on record.');
             repeatSmallVisitExists = false;
           }
         }
@@ -309,21 +276,15 @@ function day12_2(): void {
         while (0 <= nextIndex) {
           nextId = caves[stack[tip].id].links[nextIndex].id;
           if (canVisit(stack[tip].id, nextId)) {
-            console.log(`      can visit (${nextId}, ${nextIndex}, ${caves[nextId].visits})`);
             break;
           }
           remainingLinks--;
           nextIndex--;
         }
-        //console.log(`      Finished checking links from (${stack[tip].id}). nextIndex (${nextIndex}), remainingLinks (${remainingLinks})`);
       }
-      console.log('    ' + stack.map(n => `[${n.id}, ${n.index}, ${caves[n.id].visits}]`).join(', '));
     }
 
-
-
     if (0 <= nextIndex) {
-      //console.log(`  will move to: (${nextId}, ${nextIndex}, ${caves[nextId].visits})`);
       stack.push({
         id: nextId,
         index: nextIndex,
@@ -333,11 +294,11 @@ function day12_2(): void {
 
   } // end - stack loop
 
-  paths
-    .sort()
-    .forEach(p => console.dir(p));
+  //paths
+  //  .sort()
+  //  .forEach(p => console.dir(p));
 
-  console.log(`Found (${paths.length}) total paths through the caves`);
+  console.log(`Found (${totalPaths}) total paths through the caves`);
 }
 
 
