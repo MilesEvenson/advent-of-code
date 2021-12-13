@@ -4,19 +4,34 @@ import path from 'path';
 
 //
 // First attempt:
+//  Breadth-first search through the graph to build a trie(ish?)
+//  of the various paths. I think this worked okay, but I really
+//  do not like passing the dict down through the trie.
 //
+//
+//  Seriously! Start with a class tomorrow for simpler global-ish state!
+//  
 //
 // Complexity Analysis:
+//  P: total distinct paths
+//  L: length of the longest distinct path
 //
 //  Time Complexity:
+//    O(P * L)
+//    Process each node, each time it is in a path.
 //
 //  Space complexity:
+//    O(P * L)
+//    Store a node for each cave in each path.
 //
 //
-// Total time:   ~?? minutes
-//  Planning      ??
-//  Programming   ??
-//  Debugging     ??
+// Total time:   ~115 minutes
+//  Planning      25
+//  Programming   90
+//  Debugging     xx
+//                Forgot to split out debugging for 12.1
+//
+//  Some light distraction while working on this solution related to Formula 1.
 //
 
 
@@ -199,11 +214,10 @@ function day12_1(): void {
         }
       }
     });
-    // TODO
     node.visitedSmalls = {};
   }
 
-  console.dir(root, { depth: null, maxArrayLength: null });
+  //console.dir(root, { depth: null, maxArrayLength: null });
 
 
   console.log(`Found (${totalPaths}) total paths through the caves`);

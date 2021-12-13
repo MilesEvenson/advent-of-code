@@ -4,19 +4,45 @@ import path from 'path';
 
 //
 // First attempt:
+//  I didn't like passing the dict of processed caves
+//  down through the trie for 12.1 so I decided to try
+//  a depth-first stack-based approach for 12.2.
+//  At a high level, my goal was for the ids in the stack
+//  to describe a distinct path (i.e. NOT the traditional
+//  approach for DFS with a stack).
+//  This seemed like a good idea initially, but I did not
+//  spend enough time planning out the algorithm *in detail*
+//  and I ended up spending SO LONG writing and debugging :(
+//
+//  In hindsight, I should have just enhanced my solution for 12.1,
+//  and *then* tried to re-write it with a stack :(
+//
+//  I missed this requirement initially (oof)
+//    a single small cave can be visited at most twice,
+//    and the remaining small caves can be visited at most once.
+//  Luckily, it didn't take too long to address (albeit in an ugly way).
+//
+//
+//  Seriously! Start with a class tomorrow for simpler global-ish state!
+//
+//  Also! Spend more time preparing a detailed plan! Especially for
+//  algorithms I'm not as familiar with!
 //
 //
 // Complexity Analysis:
+//  P: total distinct paths
+//  L: length of the longest distinct path
 //
 //  Time Complexity:
+//    O(P * L)
+//    Process each node, each time it is in a path.
 //
 //  Space complexity:
+//    O(P * L)
+//    Store a node for each cave in each path.
 //
 //
-// Total time:   ~?? minutes
-//  Planning      ??
-//  Programming   ??
-//  Debugging     ??
+// Total time: way over par on this one :(
 //
 
 
