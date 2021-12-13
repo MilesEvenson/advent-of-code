@@ -6,7 +6,10 @@ import path from 'path';
 // First attempt:
 //  Breadth-first search through the graph to build a trie(ish?)
 //  of the various paths. I think this worked okay, but I really
-//  do not like passing the dict down through the trie.
+//  do not like passing the dict down through the trie. I'd initially
+//  thought it would allow me to avoid O(N) traversal of the preceding
+//  nodes in the path, but I have to clone the dictionary at each branch,
+//  which is an O(N) operation anyways :(
 //
 //
 //  Seriously! Start with a class tomorrow for simpler global-ish state!
