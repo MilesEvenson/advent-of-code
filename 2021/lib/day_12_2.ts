@@ -14,6 +14,11 @@ import path from 'path';
 //  spend enough time planning out the algorithm *in detail*
 //  and I ended up spending SO LONG writing and debugging :(
 //
+//  Implementing iterative DFS with a stack required a lot of logic
+//  (e.g. popping up to a branch switch) to make up for the lack
+//  of state to provide context. Remember this for future iterative
+//  approaches and compose a more detailed plan!
+//
 //  In hindsight, I should have just enhanced my solution for 12.1,
 //  and *then* tried to re-write it with a stack :(
 //
