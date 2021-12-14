@@ -4,26 +4,68 @@ import path from 'path';
 
 //
 // First attempt:
-//  
+//  Overview below in day14_2()
+//
+//  Must get faster at implementation after planning,
+//  ideally in a way that reduces problems that trigger
+//  extensive debugging.
+//
+//
+//  Total ops:
+//    with memo:    5939
+//    no memo:       ???
+//  Got 'Maximum call stack size exceeded' without the memo.
 //
 // Complexity Analysis:
+//  S: total steps
+//  C: number of distinct characters ('elements' in the prompt)
+//  I: number of distinct instructions
 //
-//  Time Complexity, 13.1:
+//  Time Complexity:
+//    O(S * I)
+//    Initially, calculate the counts for each instruction at each depth,
+//    then process outstanding instructions.
+//    
 //
 //  Space complexity:
+//    O(S * I * C)
+//    Store a count for each distinct element for each instruction for each depth.
 //
 //
-// Total time,    ????  minutes
-//  Planning       ??
-//  Programming    ??
-//  Debugging      ??
+// Total time,   ~210   minutes
+//  Planning       70
+//  Programming    50
+//  Debugging      90
 //
-//
+//  Missing off-by-one ops caused me to spend a fair amount
+//  of time re-re-re-reviewing core traversal logic when
+//  I should have taken a minute to think through the algo,
+//  and where I would need to adjust-by-one.
 //
 //
 
+
+//const SAMPLE_POLYMER = 'NN';
+//  0   2   NN
+//  1   3   NCN
+//  2   5   NBCCN
+//  3   9   NBBBCNCCN
+//  4  17   NBBNBNBBCCNBCNCCN
+//  5  33   NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBC
+
+//const SAMPLE_POLYMER = 'NNC';
+// NNC
+// NCNBC
+// NBCCNBBBC
 
 const SAMPLE_POLYMER = 'NNCB';
+//  4 NNCB
+//  7 NCNBCHB
+// 13 NBCCNBBBCBHCB
+// 25 NBBBCNCCNBBNBNBBCHBHHBCHB
+// 49 NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB
+// 97
+
 const FULL_POLYMER = 'SCSCSKKVVBKVFKSCCSOV';
 
 
@@ -91,40 +133,178 @@ function parseInstructions(rawLines: string[]): Record<string, string> {
 }
 
 
-function parsePolymer(polymer: string): Node {
-  let head: Node = {
-    element: '',
-    next: null,
-  };
-  let node: Node = {
-    element: polymer[0],
-    next: null,
-  };
-  head.next = node;
-  for (let i = 1; i < polymer.length; i++) {
-    node.next = {
-      element: polymer[i],
-      next: null,
-    };
-    node = node.next;
-  }
-  return head;
+function countsToString(counts: Record<string, number>): string {
+  const chunks = Object.keys(counts)
+    .sort()
+    .map(k => `${k}: \x1b[33m${counts[k]}\x1b[0m`);
+  return `{ ${chunks.join(', ')} }`;
 }
 
 
-function polymerToString(head: Node): string {
-  let curr = head.next;
+function padForDepth(depth: number): string {
   let str = '';
-  while (curr != null) {
-    str = str + curr.element;
-    curr = curr.next;
+  for (let d = 0; d < depth; d++) {
+    str = str + '  ';
   }
   return str;
 }
 
 
+function getExpandedCounts(
+  initialPolymer: string,
+  instructions: Record<string, string>,
+  totalSteps: number
+): Record<string, number> {
+  // This type hint is painfully verbose.
+  // For each pair from the instructions,
+  // create an array of empty dictionaries to hold memoized counts at each level.
+  const memo: Record<string, Record<string, number>[]> = Object.keys(instructions).reduce(
+    (dict, pair) => {
+      const emptyCounts: Record<string, number>[] = [];
+      for (let i = 0; i <= totalSteps; i++) {
+        emptyCounts.push({});
+      }
+      dict[pair] = emptyCounts;
+      return dict;
+    },
+    {} as Record<string, Record<string, number>[]>
+  );
+
+  let totalOps = 0;
+  const memoHits: Record<string, number> = {};
+
+  //console.dir(memo, { depth: null, maxArrayLength: null });
+
+  function expand(pair: string, depth: number): Record<string, number> {
+    if (!instructions.hasOwnProperty(pair)) {
+      console.log(`No matching instruction for pair (${pair})`);
+      // Return a 1 here so the off-by-one adjustments still work.
+      return { [pair[0]]: 1 };
+    }
+
+    //const pad = padForDepth(totalSteps-depth);
+    totalOps++;
+
+    if (depth == 1) {
+      const baseChars: string[] = [ pair[0], instructions[pair], pair[1] ];
+      const baseCounts = baseChars.reduce(
+        (dict, c) => {
+          if (!dict.hasOwnProperty(c)) {
+            dict[c] = 0;
+          }
+          dict[c]++;
+          return dict;
+        },
+        {} as Record<string, number>
+      );
+
+      memo[pair][depth] = baseCounts;
+
+      // TODO: remove logging
+      //console.log(`${pad}  base case: (${baseChars.join('')}) ${countsToString(memo[pair][depth])}`);
+    }
+
+
+// -----------
+    // TODO: remove logging
+    //if (1 < depth && 0 < Object.keys(memo[pair][depth]).length) {
+    //  console.log(`${pad}  counts exist: ${countsToString(memo[pair][depth])}`);
+    //}
+// -----------
+
+
+    if (0 < Object.keys(memo[pair][depth]).length) {
+      if (!memoHits.hasOwnProperty(`${pair}-${depth}`)) {
+        memoHits[`${pair}-${depth}`] = 0;
+      }
+      memoHits[`${pair}-${depth}`]++;
+      // TODO: be aware of possible side effects here.
+      return memo[pair][depth];
+    }
+    // else - process the next level of expansion
+
+
+    const left = expand(`${pair[0]}${instructions[pair]}`, depth-1);
+    const right = expand(`${instructions[pair]}${pair[1]}`, depth-1);
+
+    //console.log(`${pad}  left counts from (${pair[0]}${instructions[pair]}): ${countsToString(left)}`);
+    //console.log(`${pad}  right counts from (${instructions[pair]}${pair[1]}): ${countsToString(right)}`);
+
+    const counts = Object.keys(left).reduce(
+      (dict, k) => {
+        if (!dict.hasOwnProperty(k)) {
+          dict[k] = left[k];
+        } else {
+          dict[k] += left[k];
+        }
+        return dict;
+      },
+      { ...right }
+    );
+
+    counts[instructions[pair]]--;
+
+    memo[pair][depth] = counts;
+
+    //console.log(`${pad}  stored counts for pair(${pair}) at depth (${depth}).`);
+    //console.log(`${pad}  ${countsToString(counts)}`);
+
+    return counts;
+  };
+
+  const allCounts: Record<string, number> = Object.keys(instructions).reduce(
+    (dict, key) => {
+      if (!dict.hasOwnProperty(key[0])) {
+        dict[key[0]] = 0;
+      }
+      if (!dict.hasOwnProperty(key[1])) {
+        dict[key[1]] = 0;
+      }
+      if (!dict.hasOwnProperty(instructions[key])) {
+        dict[instructions[key]] = 0;
+      }
+      return dict;
+    },
+    {} as Record<string, number>
+  );
+
+  let pairCounts: Record<string, number>;
+
+  for (let c = 1; c < initialPolymer.length; c++) {
+    pairCounts = expand(`${initialPolymer[c-1]}${initialPolymer[c]}`, totalSteps);
+    for (const key in pairCounts) {
+      allCounts[key] += pairCounts[key];
+    }
+    if (1 < c) {
+      allCounts[initialPolymer[c-1]]--;
+    }
+  }
+
+  console.log(`Total ops: (${totalOps})`);
+  console.log(`Unweighted sum of memo hits: ${Object.values(memoHits).reduce((s,i) => (s+i))}`);
+  const weightedMemoHits = Object.keys(memoHits)
+    .reduce(
+      (sum, k) => {
+        const [
+          pair,
+          strDepth,
+        ] = k.split('-');
+        const depth = parseInt(strDepth, 10);
+        // I'm not 100% that this is correct, but it's decent.
+        const ops = (3 * Math.pow(2, depth) + 1) - (3 * Math.pow(2, depth-1) + 1);
+        sum += memoHits[k] * ops;
+        return sum;
+      },
+      0
+    );
+  console.log(`Rough weighted value of memo hits: ${weightedMemoHits}`);
+
+  return allCounts;
+}
+
+
 function day14_2(): void {
-  console.log('Welcome to Day 14.2. Building really really long chains, efficientl.');
+  console.log('Welcome to Day 14.2. Building really really long chains, efficiently.');
 
   // A linked list won't cut it now that we expect the final polymer
   // to contain a maximum of 2^39 elements.
@@ -132,8 +312,8 @@ function day14_2(): void {
   // From the prompt, sample input yields these max/min counts:
   // B:   2 192 039 569 602
   // H:       3 849 876 073
-  //
-  // First idea:
+
+  // First Idea:
   //  Simple jpeg-style compression
   //  Could this work?
   //  Afer reviewing FULL output from 14.1, I don't think so.
@@ -156,63 +336,55 @@ function day14_2(): void {
   // Cap chunk length at 2^30 (~1gb)?
   // That yields a max of 2^15 chunks to process.
   //
-  // There are (N^2 / 2) ordered pairs
+  // Coming from another direction, what if I pre-compute
+  // expanded 30-step counts for each ordered pair?
+  // There are  16 instructions in the SAMPLE data.
+  // There are 100 instructions in the FULL data.
+
+  // Second Idea:
+  //  General memoization strategy.
+  //  I don't want to lock to magic numbers (e.g. pre-calc out to 30 steps).
+  //
+  //  What does a generic recurisve function look like?
+  //
+  //    function expand(pair, depth) {
+  //      if (depth == 0) {
+  //        memo[pair][0] = {
+  //          [pair[0]]: 1,
+  //          [pair[1]]: 1,
+  //        };
+  //      } else if (memo[pair][depth] != null) {
+  //        return memo[pair][depth];
+  //      }
+  //      // else - compute new pairs
+  //      const left = expand(`${pair[0]}${instructions[pair]}`, depth-1);
+  //      const right = expand(`${instructions[pair]}${pair[1]}`, depth-1);
+  //      return Object.keys(left).reduce(
+  //        (dict, k) => {
+  //          if (!dict.hasOwnProperty(k)) {
+  //            dict[k] = left[k];
+  //          } else {
+  //            dict[k] += left[k];
+  //          }
+  //          return dict;
+  //        },
+  //        { ...right }
+  //      );
+  //    }
+  //
 
 
 
-  const STEP_COUNT = 10;
+  const STEP_COUNT = 40;
+  //const STEP_COUNT = 10;
 
-  // Read molecule into a linked list
-  const head = parsePolymer(getRawPolymer());
   // Read instructions into dictionary
   const instructions = parseInstructions(getRawInstructions());
-  // Initialize dict for tracking per-element counts
-  let elementCounts: Record<string, number> = {};
 
-  let prev: Node;
-  let curr: Node | null;
-  let newElement = '';
-
-  for (let s = 0; s < STEP_COUNT; s++) {
-    prev = head.next as Node;
-    curr = head?.next?.next as Node;
-
-    elementCounts = {
-      [prev.element]: 1,
-    };
-
-    // traverse with prev and curr "nodes"
-    while (curr != null) {
-      if (!elementCounts.hasOwnProperty(curr.element)) {
-        elementCounts[curr.element] = 0;
-      }
-      elementCounts[curr.element]++;
-
-      newElement = instructions[prev.element + curr.element];
-      // if (prev, curr) matches a rule, 
-      if (newElement) {
-        //  insert new element after prev
-        prev.next = {
-          element: newElement,
-          next: curr,
-        };
-        //  update counts for new element
-        if (!elementCounts.hasOwnProperty(newElement)) {
-          elementCounts[newElement] = 0;
-        }
-        elementCounts[newElement]++;
-        prev = prev.next;
-      }
-
-      curr = curr.next;
-      prev = prev.next as Node;
-    }
-  }
-
-  console.log(`Executed (${STEP_COUNT}) steps.`);
-
-  console.log(polymerToString(head));
-  console.dir(elementCounts);
+  const initialPolymer = getRawPolymer();
+  const elementCounts = getExpandedCounts(initialPolymer, instructions, STEP_COUNT);
+  console.log('\n');
+  console.log(countsToString(elementCounts));
 
   let minCount = Number.MAX_SAFE_INTEGER;
   let minElement = '';
