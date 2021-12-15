@@ -55,6 +55,48 @@ const SAMPLE_TWISTER = [
   '2311944581',
 ];
 
+// 9 colors to make it easy to map value -> color
+const SPECTRUM = [
+  // black
+  //'\x1b[2m\x1b[30m',
+  //'\x1b[1m\x1b[30m',
+  '\x1b[30m',
+
+  // red
+  //'\x1b[2m\x1b[31m',
+  '\x1b[1m\x1b[31m',
+  '\x1b[31m',
+
+  // yellow
+  //'\x1b[2m\x1b[33m',
+  '\x1b[33m',
+  //'\x1b[1m\x1b[33m',
+
+  // green
+  //'\x1b[2m\x1b[32m',
+  '\x1b[32m',
+  //'\x1b[1m\x1b[32m',
+
+  // blue
+  //'\x1b[2m\x1b[34m',
+  '\x1b[34m',
+  //'\x1b[1m\x1b[34m',
+
+  // cyan
+  //'\x1b[2m\x1b[36m',
+  '\x1b[36m',
+  //'\x1b[1m\x1b[36m',
+
+  // white
+  //'\x1b[2m\x1b[37m',
+  '\x1b[37m',
+  '\x1b[1m\x1b[37m',
+
+  // bg white / fg black
+  '\x1b[47m\x1b[30m',
+
+];
+
 
 const C_RESET = '\x1b[0m';
 
@@ -156,49 +198,7 @@ function calculateAverages(grid: number[][], offset: number): number[][] {
 
 
 function printHeatmap(grid: number[][]): void {
-
-  // 9 colors to make it easy to map value -> color
-  const spectrum = [
-    // black
-    //'\x1b[2m\x1b[30m',
-    //'\x1b[1m\x1b[30m',
-    //'\x1b[30m',
-
-    // red
-    //'\x1b[2m\x1b[31m',
-    '\x1b[1m\x1b[31m',
-    '\x1b[31m',
-
-    // yellow
-    //'\x1b[2m\x1b[33m',
-    '\x1b[33m',
-    //'\x1b[1m\x1b[33m',
-
-    // green
-    //'\x1b[2m\x1b[32m',
-    '\x1b[32m',
-    //'\x1b[1m\x1b[32m',
-
-    // blue
-    //'\x1b[2m\x1b[34m',
-    '\x1b[34m',
-    //'\x1b[1m\x1b[34m',
-
-    // cyan
-    //'\x1b[2m\x1b[36m',
-    '\x1b[36m',
-    //'\x1b[1m\x1b[36m',
-
-    // white
-    //'\x1b[2m\x1b[37m',
-    '\x1b[37m',
-    '\x1b[1m\x1b[37m',
-
-    // bg white / fg black
-    '\x1b[47m\x1b[30m',
-
-  ];
-  console.log(spectrum.map(c => `${c}0${C_RESET}`).join(''));
+  //console.log(SPECTRUM.map(c => `${c}0${C_RESET}`).join(''));
 
   let rowVals: string[] = [];
   let colorIndex = 0;
@@ -207,7 +207,7 @@ function printHeatmap(grid: number[][]): void {
     rowVals = [];
     for (let c = 0; c < grid[r].length; c++) {
       colorIndex = Math.round(grid[r][c]) - 1;
-      color = spectrum[colorIndex];
+      color = SPECTRUM[colorIndex];
       rowVals.push(`${color}${Math.round(grid[r][c])}${C_RESET}`);
     }
     console.log(rowVals.join(''));
@@ -228,7 +228,9 @@ function printPath(
       cell = ' ';
       steps.forEach((s, idx) => {
         if (s.row == r && s.col == c) {
-          cell = `${idx}`;
+          const colorIndex = Math.floor(idx / SPECTRUM.length);
+          const shortStep = idx % 10;
+          cell = `${SPECTRUM[colorIndex]}${shortStep}${C_RESET}`;
         }
       });
       line.push(cell);
