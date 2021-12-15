@@ -24,7 +24,7 @@ import path from 'path';
 
 
 const SAMPLE_GRID = [
-  '1163751742',
+  '0163751742',
   '1381373672',
   '2136511328',
   '3694931569',
@@ -37,13 +37,13 @@ const SAMPLE_GRID = [
 ];
 
 const SAMPLE_SMALL = [
-  '116',
+  '016',
   '138',
   '213',
 ];
 
 const SAMPLE_TWISTER = [
-  '1169751742',
+  '0169751742',
   '1381373672',
   '2796511328',
   '1692931569',
@@ -369,6 +369,15 @@ function day15_1(): void {
   //  for a given cell, move to safest unvisited neighbor
   //    if tie, pick South-er, or East-er branch.
   //
+  // This is too slow!
+  // On the 10x10 test grid, the brute force backtracking
+  // is waaaaay too slow (15min to backtrack 44 steps).
+  //
+  //
+  // Third Idea:
+  //  Incrementally calculate each cell's distance to the entrance,
+  //  then find a good path using those values.
+  //
 
 
   function getOpenNeighborCoords(
@@ -378,21 +387,39 @@ function day15_1(): void {
     colMax: number
   ): Coord[] {
     let coords: Coord[] = [];
+    const slugHere = getSlug(row, col);
     const slugNorth = getSlug(row-1, col);
     const slugEast = getSlug(row, col+1);
     const slugSouth = getSlug(row+1, col);
     const slugWest = getSlug(row, col-1);
+    const idxVisits = visitedCells.length - 1;
 
-    if (0 < row && !visitedCells[0].hasOwnProperty(slugNorth)) {
+    if (
+      0 < row
+      && !visitedCells[idxVisits].hasOwnProperty(slugNorth)
+      && blockedMoves[idxVisits][slugHere] != slugNorth
+    ) {
       coords.push({ row: row-1, col: col });
     }
-    if (col < colMax && !visitedCells[0].hasOwnProperty(slugEast)) {
+    if (
+      col < colMax
+      && !visitedCells[idxVisits].hasOwnProperty(slugEast)
+      && blockedMoves[idxVisits][slugHere] != slugEast
+    ) {
       coords.push({ row: row, col: col+1 });
     }
-    if (row < rowMax && !visitedCells[0].hasOwnProperty(slugSouth)) {
+    if (
+      row < rowMax
+      && !visitedCells[idxVisits].hasOwnProperty(slugSouth)
+      && blockedMoves[idxVisits][slugHere] != slugSouth
+    ) {
       coords.push({ row: row+1, col: col });
     }
-    if (0 < col && !visitedCells[0].hasOwnProperty(slugWest)) {
+    if (
+      0 < col
+      && !visitedCells[idxVisits].hasOwnProperty(slugWest)
+      && blockedMoves[idxVisits][slugHere] != slugWest
+    ) {
       coords.push({ row: row, col: col-1 });
     }
     return coords;
@@ -404,7 +431,8 @@ function day15_1(): void {
   const rowMax = grid.length - 1;
   const colMax = grid[0].length - 1;
 
-  const visitedCells: Record<string, number>[] = [{'0-0': 0}];
+  const visitedCells: Record<string, string>[] = [{'0-0': '0-0'}];
+  const blockedMoves: Record<string, string>[] = [{}];
   const allPaths: Step[][] = [];
   let basePath: Step[] = [
     {
@@ -420,61 +448,130 @@ function day15_1(): void {
   let minRiskCoord: Coord;
 
 
-  function moveGreedy(row: number, col: number, pathRisk: number): Step[] {
+  function moveGreedy(
+    row: number,
+    col: number,
+    pathRisk: number,
+    maxRisk: number,
+  ): Step[] {
     const openNeighbors = getOpenNeighborCoords(row, col, rowMax, colMax);
-    console.log(`  cell (${getSlug(row, col)} ${grid[row][col]}) has ${openNeighbors.length} open neighbors.`);
-    console.log(`    ${openNeighbors.map(n => `(${getSlug(n.row, n.col)} ${grid[n.row][n.col]})`)}`);
+    //console.log(`  cell (${getSlug(row, col)} ${grid[row][col]}) has pathRisk (${pathRisk}) and ${openNeighbors.length} open neighbors.`);
+    //console.log(`    ${openNeighbors.map(n => `(${getSlug(n.row, n.col)} ${grid[n.row][n.col]})`)}`);
     if (openNeighbors.length == 0) {
       return [];
     }
 
-    visitedCells[0][getSlug(row, col)] = grid[row][col];
+    let cellRisk = grid[row][col];
+
+    if (0 < maxRisk && maxRisk <= (pathRisk + cellRisk)) {
+      //console.log(`  too risky at cell (${getSlug(row, col)} ${grid[row][col]}).`);
+      return [];
+    }
+
+    const idxVisits = visitedCells.length - 1;
+    visitedCells[idxVisits][getSlug(row, col)] = '';
+
+    const exit = openNeighbors.find(n => (n.row == rowMax && n.col == colMax));
+    if (exit) {
+      console.log('  *** found the exit ***');
+      return [
+        {
+          row: row,
+          col: col,
+          risk: cellRisk,
+          pathRisk: (pathRisk + cellRisk),
+        },
+        {
+          row: exit.row,
+          col: exit.col,
+          risk: grid[exit.row][exit.col],
+          pathRisk: (pathRisk + cellRisk + grid[exit.row][exit.col]),
+        }
+      ];
+    }
 
     openNeighbors.sort((a, b) => (grid[a.row][a.col] - grid[b.row][b.col]));
+    let nebRisk = 0;
     let subPath: Step[];
     for (const neb of openNeighbors) {
-      // Finish if the current neighbor is the exit.
-      if (neb.row == rowMax && neb.col == colMax) {
-        console.log('  *** found the exit ***');
-        return [
-          {
-            row: row,
-            col: col,
-            risk: grid[row][col],
-            pathRisk: (pathRisk + grid[row][col]),
-          },
-          {
-            row: neb.row,
-            col: neb.col,
-            risk: grid[neb.row][neb.col],
-            pathRisk: (pathRisk + grid[row][col] + grid[neb.row][neb.col]),
-          }
-        ];
-      }
-      subPath = moveGreedy(neb.row, neb.col, (pathRisk + grid[row][col]));
+      nebRisk = grid[neb.row][neb.col];
+      subPath = moveGreedy(neb.row, neb.col, (pathRisk + cellRisk), maxRisk);
       if (0 < subPath.length) {
         subPath.unshift({
           row: row,
           col: col,
-          risk: grid[row][col],
-          pathRisk: (pathRisk + grid[row][col]),
+          risk: cellRisk,
+          //pathRisk: (pathRisk + grid[row][col]),
+          pathRisk: pathRisk,
         });
+        // Track how this path got to neb to handle an edge case while finding altPath.
+        visitedCells[idxVisits][getSlug(neb.row, neb.col)] = getSlug(row, col);
         return subPath;
       }
-      console.log(`  subPath to (${getSlug(neb.row, neb.col)} ${grid[neb.row][neb.col]}) did not work`);
+      //console.log(`  subPath to (${getSlug(neb.row, neb.col)} ${grid[neb.row][neb.col]}) did not work`);
     }
 
-    delete visitedCells[0][getSlug(row, col)];
+    delete visitedCells[idxVisits][getSlug(row, col)];
     return [];
   }
 
-  allPaths.push(moveGreedy(0, 0, 0));
-  console.dir(allPaths);
+  allPaths.push(moveGreedy(0, 0, 0, 0));
+  visitedCells.push({ ...visitedCells[0] });
+  blockedMoves.push({});
+  console.log('---- BASE PATH ----');
+  console.log(allPaths[0]);
   printPath(allPaths[0], rowMax, colMax);
 
+  let idxVisits = 1;
+  let altPath: Step[] = [];
+  let maxRisk = allPaths[0][allPaths[0].length-1].pathRisk;
 
-  const pathLength = 0;
-  const totalRiskLevel = 0
+  // This is heinous. Basically, open up the last couple cells.
+  delete visitedCells[idxVisits][getSlug(allPaths[0][allPaths[0].length-1].row, allPaths[0][allPaths[0].length-1].col)];
+  delete visitedCells[idxVisits][getSlug(allPaths[0][allPaths[0].length-2].row, allPaths[0][allPaths[0].length-2].col)];
+  delete visitedCells[idxVisits][getSlug(allPaths[0][allPaths[0].length-3].row, allPaths[0][allPaths[0].length-3].col)];
+
+  // Start at the fourth-to-last step, where real alternatives exist.
+  //  - length-1: This is the exit. It's not worth starting here.
+  //  - length-2: This is adjacent to exit. There is no safer alternate path starting from here.
+  //  - length-3: Greedy chose this as the safest cell adjacent to exit, can't do better than this.
+  //  - length-4: Finally, a cell with reasonable alternate paths.
+  for (let ib = allPaths[0].length - 4; 0 <= ib; ib--) {
+    // Specifically block moving from the current backtrack start cell
+    // to the next cell in the base path to prevent a repeat of that path.
+    blockedMoves[idxVisits][getSlug(allPaths[0][ib].row, allPaths[0][ib].col)] = getSlug(allPaths[0][ib+1].row, allPaths[0][ib+1].col);
+
+    console.log(`Backtracking (${allPaths[0].length - 1 - ib}) steps to cell (${getSlug(allPaths[0][ib].row, allPaths[0][ib].col)} ${grid[allPaths[0][ib].row][allPaths[0][ib].col]})`);
+    //console.dir(visitedCells[idxVisits]);
+    //console.dir(blockedMoves[idxVisits]);
+
+    altPath = moveGreedy(
+      allPaths[0][ib].row,
+      allPaths[0][ib].col,
+      allPaths[0][ib].pathRisk,
+      maxRisk
+    );
+    if (0 < altPath.length) {
+      if (altPath[altPath.length-1].pathRisk < maxRisk) {
+        //console.log('  >>>> Found new, safer path.');
+        maxRisk = altPath[altPath.length-1].pathRisk;
+        allPaths.push(allPaths[0].slice(0, ib+1).concat(altPath));
+        visitedCells.push({ ...visitedCells[idxVisits] });
+        blockedMoves.push({});
+        idxVisits = visitedCells.length - 1;
+      } else {
+        //console.log('ERROR - found an alt path with unacceptible risk');
+      }
+    }
+    delete blockedMoves[idxVisits][getSlug(allPaths[0][ib].row, allPaths[0][ib].col)];
+    delete visitedCells[idxVisits][getSlug(allPaths[0][ib].row, allPaths[0][ib].col)];
+  }
+
+  console.dir(allPaths);
+
+
+  const pathLength = allPaths[allPaths.length-1].length;
+  const totalRiskLevel = allPaths[allPaths.length-1].reduce((sum, step) => (sum + step.risk), 0);
 
   console.log(`Traversed (${pathLength}) cells with a total risk level of (${totalRiskLevel}).`);
 }
