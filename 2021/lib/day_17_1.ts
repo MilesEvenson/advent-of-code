@@ -100,7 +100,7 @@ function isFull(): boolean {
 }
 
 
-function T(step: number): number {
+function T_1(step: number): number {
   if (step <= 0) {
     return 0;
   }
@@ -115,12 +115,12 @@ function getCandidateXValues(targetLeft: number, targetRight: number): Record<nu
   let vX0 = 1;
   let xFinal = 1;
   do {
-    xFinal = T(vX0);
+    xFinal = T_1(vX0);
     if (targetLeft <= xFinal && xFinal <= targetRight) {
       values[vX0] = vX0;
     }
     vX0++;
-  } while (T(vX0) <= targetRight);
+  } while (T_1(vX0) <= targetRight);
 
   // Collect vX0 values where a mid-range step is in the target area.
   let flyingStep = 1;
@@ -128,7 +128,7 @@ function getCandidateXValues(targetLeft: number, targetRight: number): Record<nu
   do {
     flyingStep = 1;
     do {
-      xFlying = T(vX0) - T(vX0 - flyingStep);
+      xFlying = T_1(vX0) - T_1(vX0 - flyingStep);
       if (targetLeft <= xFlying && xFlying <= targetRight) {
         values[vX0] = flyingStep;
       }
@@ -163,11 +163,11 @@ function getCandidateYValues(targetTop: number, targetBottom: number): Record<nu
 
   // Collect the Mid-Range values
   for (let y = 0; y < Math.floor(Math.abs(targetBottom) / 2); y++) {
-    maxY = T(y);
+    maxY = T_1(y);
     fallingStep = y + 1;
 
     do {
-      yFalling = maxY - T(fallingStep);
+      yFalling = maxY - T_1(fallingStep);
       fallingStep++
     } while (targetTop < yFalling);
 
@@ -194,7 +194,7 @@ function findHitWithMaxY(
 
   for (const vX0 in xValues) {
     intVX0 = parseInt(vX0, 10);
-    xStalled = (targetLeft <= T(intVX0) && T(intVX0) <= targetRight);
+    xStalled = (targetLeft <= T_1(intVX0) && T_1(intVX0) <= targetRight);
 
     for (const vY0 in yValues) {
       intVY0 = parseInt(vY0, 10);
@@ -207,8 +207,8 @@ function findHitWithMaxY(
       }
 
       if (isHit) {
-        if (maxY < T(intVY0)) {
-            maxY = T(intVY0);
+        if (maxY < T_1(intVY0)) {
+            maxY = T_1(intVY0);
         }
       }
     }
