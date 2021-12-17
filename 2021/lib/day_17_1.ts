@@ -52,6 +52,20 @@
 //  T(9) - T(9-4) => 30 (the hit)
 //
 //
+//  After a healthy amount of muddled debugging,
+//  still haven't found the correct answer.
+//  There are a couple ways to group positive values for vY0
+//
+//    Super High    The first fallingStep (first below 0)
+//                  puts a hit in the target area.
+//                  These are easy to calculate
+//                  because (vY0+1) is in the set { top .. bottom }.
+//
+//    Mid-Range     There are multiple fallingSteps below 0.
+//                  This is every value vY0 <= |bottom| / 2
+//                  (values closer to bottom will overshoot)
+//
+//    Update getCandidateYValues() to use this logic!
 //
 //
 // Complexity Analysis:
@@ -78,6 +92,7 @@ const SAMPLE_TARGET = {
   left: 20,               right: 30,
             bottom: -10,
 };
+
 // 'target area: x=128..160, y=-142..-88';
 const FULL_TARGET = {
               top: -88,
@@ -87,6 +102,8 @@ const FULL_TARGET = {
 
 
 interface FiringSolution {
+  hitX: number;
+  hitY: number;
   initialX: number;
   initialY: number;
   trajectory: number[][];
@@ -99,12 +116,15 @@ function isFull(): boolean {
 
 
 function T(step: number): number {
+  if (step <= 0) {
+    return 0;
+  }
   return (step * (step + 1)) / 2;
 }
 
 
 function getCandidateXValues(targetLeft: number, targetRight: number): Record<number, number> {
-  console.log(`Collecting candidate X values for target range (${targetLeft}..${targetRight})`);
+  //console.log(`Collecting candidate X values for target range (${targetLeft}..${targetRight})`);
 
   const values: Record<number, number> = {};
 
@@ -120,23 +140,13 @@ function getCandidateXValues(targetLeft: number, targetRight: number): Record<nu
   } while (T(vX0) <= targetRight);
 
   // Collect vX0 values where a mid-range step is in the target area.
-  // TODO: expensive calculations to get mid-range hits.
-
-  // xFlying = T(vX0) - T(vX0 - flyingStep)
-  // if xFlying < left
-  //  undershot, flyingStep++
-  // else if left <= xFlying <= right
-  //  hit, count it
-  // else
-  //  overshot, break
-
   let flyingStep = 1;
   let xFlying = 0;
   do {
     flyingStep = 1;
     do {
       xFlying = T(vX0) - T(vX0 - flyingStep);
-      console.log(`  at (${vX0}, ${flyingStep}) xFlying (${xFlying})`);
+      //console.log(`  at (${vX0}, ${flyingStep}) xFlying (${xFlying})`);
       if (targetLeft <= xFlying && xFlying <= targetRight) {
         values[vX0] = flyingStep;
       }
@@ -156,7 +166,7 @@ function getCandidateXValues(targetLeft: number, targetRight: number): Record<nu
 
 
 function getCandidateYValues(targetTop: number, targetBottom: number): Record<number, number> {
-  console.log(`Collecting candidate Y values for target range (${targetTop}..${targetBottom})`);
+  //console.log(`Collecting candidate Y values for target range (${targetTop}..${targetBottom})`);
   const values: Record<number, number> = {};
   let fallingStep = 0;
   let vY0 = 0;
@@ -167,16 +177,25 @@ function getCandidateYValues(targetTop: number, targetBottom: number): Record<nu
   // TODO: Verify this can handle negative values for vY0 (aka - direct shot at target)
 
   do {
-    maxY = T(vY0);
-    console.log(`  vY0 (${vY0}) with maxY (${maxY})`);
-    fallingStep = vY0 + 1;
+    if (vY0 <= 0) {
+      maxY = 0;
+      fallingStep = 0;
+    } else {
+      maxY = T(vY0);
+      fallingStep = vY0 + 1;
+    }
+    //console.log(`  vY0 (${vY0}) with maxY (${maxY})`);
     do {
-      yFalling = vY0 - T(fallingStep);
-      console.log(`  yFalling (${yFalling}) at falling step (${fallingStep})`);
+      yFalling = maxY - T(fallingStep);
+      //console.log(`  yFalling (${yFalling} <= ${maxY} - ${T(fallingStep)}) at falling step (${fallingStep})`);
       fallingStep++;
     } while (targetTop < yFalling);
     if (yFalling <= targetTop && targetBottom <= yFalling) {
-      values[vY0] = fallingStep + vY0;
+      if (vY0 <= 0) { 
+        values[vY0] = fallingStep;
+      } else {
+        values[vY0] = vY0 + fallingStep;
+      }
     }
     vY0++;
   } while (targetBottom <= yFalling);
@@ -185,33 +204,88 @@ function getCandidateYValues(targetTop: number, targetBottom: number): Record<nu
 }
 
 
-function generateTrajectories(
+function findHitWithMaxY(
   xValues: Record<number, number>,
-  yValues: Record<number, number>
-): number[][] {
-  const trajectories: number[][] = [];
+  yValues: Record<number, number>,
+  targetLeft: number,
+  targetRight: number
+): number {
+  let isHit = false;
+  let xStalled = false;
+  let maxY = 0;
+  let intVX0 = 0;
+  let intVY0 = 0;
 
   for (const vX0 in xValues) {
+    intVX0 = parseInt(vX0, 10);
+    console.log(`  Checking vX0 (${vX0}, ${intVX0}) with maxX (${T(intVX0)}).`);
+    xStalled = (targetLeft <= T(intVX0) && T(intVX0) <= targetRight);
+
+    if (targetLeft <= T(intVX0)) {
+      console.log(`        maxX to the right of targetLeft (${targetLeft} <= ${T(intVX0)})`);
+    } else {
+      console.log(`        maxX less than targetLeft (${T(intVX0)} <= ${targetLeft})`);
+    }
+
+
+    if (T(intVX0) <= targetRight) {
+      console.log(`        maxX to the left of targetRight (${T(intVX0)} <= ${targetRight})`);
+    } else {
+      console.log(`        maxX greater than targetRight (${targetLeft} <= ${T(intVX0)})`);
+    }
+
+    if (xStalled) {
+      console.log(`    vX0 (${vX0}) stalls at (${T(intVX0)}) after (${xValues[vX0]}) steps.`);
+    } else {
+      console.log(`    no stall for vX0 (${vX0}).`);
+    }
+
     for (const vY0 in yValues) {
-      // do a smart check
+      intVY0 = parseInt(vY0, 10);
+      isHit = false;
+
+      if (xValues[vX0] == yValues[vY0]) {
+        isHit= true;
+      } else if (xStalled && xValues[vX0] <= yValues[vY0]) {
+        isHit= true;
+      }
+
+      if (isHit) {
+        console.log(`      Hit for (${vX0}, ${vY0})`);
+        if (maxY < T(intVY0)) {
+            maxY = T(intVY0);
+        }
+      }
+
     }
   }
 
-  return trajectories;
+  return maxY;
 }
 
 
 function day17_1(): void {
   console.log('Welcome to Day 17.1. May your probes fly high.');
 
+  let target = SAMPLE_TARGET;
+
   if (isFull()) {
-    console.log('TODO: load full data');
+    console.log('Aiming at the FULL target.');
+    target = FULL_TARGET;
   } else {
-    const candidateX = getCandidateXValues(SAMPLE_TARGET.left, SAMPLE_TARGET.right);
-    console.dir(candidateX);
-    const candidateY = getCandidateYValues(SAMPLE_TARGET.top, SAMPLE_TARGET.bottom);
-    console.dir(candidateY);
+    console.log('Aiming at the SAMPLE target.');
   }
+
+  const candidateX = getCandidateXValues(target.left, target.right);
+  const candidateY = getCandidateYValues(target.top, target.bottom);
+  console.dir(candidateX);
+  console.dir(candidateY);
+
+  // 2415   low
+  // 2346   low
+
+  const maxY = findHitWithMaxY(candidateX, candidateY, target.left, target.right);
+  console.log(`Found maxY (${maxY}).`);
 
 }
 
