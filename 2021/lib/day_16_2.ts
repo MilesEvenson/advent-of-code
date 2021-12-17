@@ -210,6 +210,10 @@ function getFullTransmission(): string {
   const buffInput = fs.readFileSync(path.join(__dirname, 'data', 'day_16.input.txt'));
   return buffInput.toString().trim();
 }
+function getErikTransmission(): string {
+  const buffInput = fs.readFileSync(path.join(__dirname, 'data', 'day_16.input.erik.txt'));
+  return buffInput.toString().trim();
+}
 
 
 function hex2bin(hex: string): string {
@@ -422,23 +426,23 @@ function evaluatePacket(packet: Packet): number {
 
   switch (packet.typeID) {
     case PacketType.Sum:
-      console.log(`( ${subValues.join(' + ')} )`);
+      console.log(`packet ${packet.offset}: ( ${subValues.join(' + ')} )`);
       result = subValues.reduce((s, i) => (s + i), 0);
       break;
     case PacketType.Product:
-      console.log(`( ${subValues.join(' * ')} )`);
+      console.log(`packet ${packet.offset}: ( ${subValues.join(' * ')} )`);
       result = subValues.reduce((s, i) => (s * i), 1);
       break;
     case PacketType.Min:
-      console.log(`MIN[ ${subValues.join(', ')} ]`);
+      console.log(`packet ${packet.offset}: MIN[ ${subValues.join(', ')} ]`);
       result = subValues.reduce((min, i) => ((i < min) ? i : min), subValues[0]);
       break;
     case PacketType.Max:
-      console.log(`MAX[ ${subValues.join(', ')} ]`);
+      console.log(`packet ${packet.offset}: MAX[ ${subValues.join(', ')} ]`);
       result = subValues.reduce((max, i) => ((max < i) ? i : max), subValues[0]);
       break;
     case PacketType.GT:
-      console.log(`( ${subValues[1]} < ${subValues[0]})`);
+      console.log(`packet ${packet.offset}: ( ${subValues[1]} < ${subValues[0]})`);
       if (subValues[1] < subValues[0]) {
         result = 1;
       } else {
@@ -446,7 +450,7 @@ function evaluatePacket(packet: Packet): number {
       }
       break;
     case PacketType.LT:
-      console.log(`( ${subValues[0]} < ${subValues[1]})`);
+      console.log(`packet ${packet.offset}: ( ${subValues[0]} < ${subValues[1]})`);
       if (subValues[0] < subValues[1]) {
         result = 1;
       } else {
@@ -454,7 +458,7 @@ function evaluatePacket(packet: Packet): number {
       }
       break;
     case PacketType.EQ:
-      console.log(`( ${subValues[0]} == ${subValues[1]})`);
+      console.log(`packet ${packet.offset}: ( ${subValues[0]} == ${subValues[1]})`);
       if (subValues[0] == subValues[1]) {
         result = 1;
       } else {
@@ -491,6 +495,10 @@ function day16_2(): void {
     const fullPacket = processTransmission(getFullTransmission());
     const result = evaluatePacket(fullPacket);
     console.log(`Full input yielded result: (${result})`);
+  } else if (process.env.SOURCE == 'ERIK') {
+    const fullPacket = processTransmission(getErikTransmission());
+    const result = evaluatePacket(fullPacket);
+    console.log(`Erik input yielded result: (${result})`);
   } else {
     processSampleData();
   }
