@@ -80,12 +80,6 @@
 //
 
 
-const C_RESET = '\x1b[0m';
-
-
-const START_X = 0;
-const START_Y = 0;
-
 // 'target area: x=20..30, y=-10..-5';
 const SAMPLE_TARGET = {
             top: -5,
@@ -99,15 +93,6 @@ const FULL_TARGET = {
   left: 128,                right: 160,
               bottom: -142,
 };
-
-
-interface FiringSolution {
-  hitX: number;
-  hitY: number;
-  initialX: number;
-  initialY: number;
-  trajectory: number[][];
-}
 
 
 function isFull(): boolean {
@@ -124,8 +109,6 @@ function T(step: number): number {
 
 
 function getCandidateXValues(targetLeft: number, targetRight: number): Record<number, number> {
-  //console.log(`Collecting candidate X values for target range (${targetLeft}..${targetRight})`);
-
   const values: Record<number, number> = {};
 
   // Collect vX0 values such that xFinal is in the target area.
@@ -146,7 +129,6 @@ function getCandidateXValues(targetLeft: number, targetRight: number): Record<nu
     flyingStep = 1;
     do {
       xFlying = T(vX0) - T(vX0 - flyingStep);
-      //console.log(`  at (${vX0}, ${flyingStep}) xFlying (${xFlying})`);
       if (targetLeft <= xFlying && xFlying <= targetRight) {
         values[vX0] = flyingStep;
       }
@@ -166,39 +148,33 @@ function getCandidateXValues(targetLeft: number, targetRight: number): Record<nu
 
 
 function getCandidateYValues(targetTop: number, targetBottom: number): Record<number, number> {
-  //console.log(`Collecting candidate Y values for target range (${targetTop}..${targetBottom})`);
   const values: Record<number, number> = {};
+
+  // Assuming the maxY for the FULL target won't be negative.
+
+  // Collect Super High values
+  for (let bigY = targetTop; targetBottom <= bigY; bigY--) {
+    values[Math.abs(bigY+1)] = (Math.abs(bigY+1) * 2) + 1;
+  }
+
   let fallingStep = 0;
-  let vY0 = 0;
   let maxY = 0;
   let yFalling = 0;
 
-  // Live dangerously and assume the maxY for the FULL target won't be negative.
-  // TODO: Verify this can handle negative values for vY0 (aka - direct shot at target)
+  // Collect the Mid-Range values
+  for (let y = 0; y < Math.floor(Math.abs(targetBottom) / 2); y++) {
+    maxY = T(y);
+    fallingStep = y + 1;
 
-  do {
-    if (vY0 <= 0) {
-      maxY = 0;
-      fallingStep = 0;
-    } else {
-      maxY = T(vY0);
-      fallingStep = vY0 + 1;
-    }
-    //console.log(`  vY0 (${vY0}) with maxY (${maxY})`);
     do {
       yFalling = maxY - T(fallingStep);
-      //console.log(`  yFalling (${yFalling} <= ${maxY} - ${T(fallingStep)}) at falling step (${fallingStep})`);
-      fallingStep++;
+      fallingStep++
     } while (targetTop < yFalling);
+
     if (yFalling <= targetTop && targetBottom <= yFalling) {
-      if (vY0 <= 0) { 
-        values[vY0] = fallingStep;
-      } else {
-        values[vY0] = vY0 + fallingStep;
-      }
+      values[y] = y + fallingStep;
     }
-    vY0++;
-  } while (targetBottom <= yFalling);
+  }
 
   return values;
 }
@@ -218,27 +194,7 @@ function findHitWithMaxY(
 
   for (const vX0 in xValues) {
     intVX0 = parseInt(vX0, 10);
-    console.log(`  Checking vX0 (${vX0}, ${intVX0}) with maxX (${T(intVX0)}).`);
     xStalled = (targetLeft <= T(intVX0) && T(intVX0) <= targetRight);
-
-    if (targetLeft <= T(intVX0)) {
-      console.log(`        maxX to the right of targetLeft (${targetLeft} <= ${T(intVX0)})`);
-    } else {
-      console.log(`        maxX less than targetLeft (${T(intVX0)} <= ${targetLeft})`);
-    }
-
-
-    if (T(intVX0) <= targetRight) {
-      console.log(`        maxX to the left of targetRight (${T(intVX0)} <= ${targetRight})`);
-    } else {
-      console.log(`        maxX greater than targetRight (${targetLeft} <= ${T(intVX0)})`);
-    }
-
-    if (xStalled) {
-      console.log(`    vX0 (${vX0}) stalls at (${T(intVX0)}) after (${xValues[vX0]}) steps.`);
-    } else {
-      console.log(`    no stall for vX0 (${vX0}).`);
-    }
 
     for (const vY0 in yValues) {
       intVY0 = parseInt(vY0, 10);
@@ -251,12 +207,10 @@ function findHitWithMaxY(
       }
 
       if (isHit) {
-        console.log(`      Hit for (${vX0}, ${vY0})`);
         if (maxY < T(intVY0)) {
             maxY = T(intVY0);
         }
       }
-
     }
   }
 
@@ -278,8 +232,6 @@ function day17_1(): void {
 
   const candidateX = getCandidateXValues(target.left, target.right);
   const candidateY = getCandidateYValues(target.top, target.bottom);
-  console.dir(candidateX);
-  console.dir(candidateY);
 
   // 2415   low
   // 2346   low
