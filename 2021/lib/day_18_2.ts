@@ -8,6 +8,13 @@ const INPUT_FULL = require('./data/day_18.input');
 // Initial Thoughts:
 //
 //
+// Reflection:
+//  Found a couple bugs in my traversal and reducing logic.
+//  I also burned a lot of time tracking down pointer behavior
+//  that seemed weird at the time, but is obvious in hindsight.
+//  Specifically, newObj = { ...oldObj } is not a deep copy.
+//    See the note under Copy an array:
+//      https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#spread_in_array_literals
 //
 //
 //
@@ -117,14 +124,6 @@ function getNodeFromSnailNumber(rawNumber: SnailNumber[]): Node {
     root.right.parent = root;
   }
 
-  console.log(`Created node (${nodeToString(root)})`);
-  if (root.left && typeof root.left != 'number') {
-    console.log('  left sees parent:  ' + nodeToString(root.left.parent as Node));
-  }
-  if (root.right && typeof root.right != 'number') {
-    console.log('  right sees parent: ' + nodeToString(root.right.parent as Node));
-  }
-
   return root;
 }
 
@@ -148,7 +147,6 @@ function nodeToString(node: Node): string {
 
 
 function addToImmediateLeft(node: Node, newValue: number): void {
-  console.log('Left');
   let prev = node;
   let runner = node.parent;
 
@@ -176,20 +174,14 @@ function addToImmediateLeft(node: Node, newValue: number): void {
 
 
 function addToImmediateRight(node: Node, newValue: number): void {
-  console.log('Right');
   let prev = node;
   let runner = node.parent;
 
   // go up until there is a right
   while (runner && runner.right == prev) {
-    console.log(`  moving up from: ${nodeToString(runner)}`);
-    console.dir(runner, { depth: 1 });
     prev = runner;
     runner = runner.parent;
   }
-
-  console.log(`  moved up to:   ${nodeToString(runner as Node)}`);
-  console.dir(runner, { depth: 1 });
 
   if (runner) {
     // If the right is a number, update it.
@@ -198,14 +190,10 @@ function addToImmediateRight(node: Node, newValue: number): void {
     } else {
       // go right once
       runner = runner.right;
-      console.log('  down right once to:');
-      console.dir(runner, { depth: 1 });
       // go down left until the left is a number
       while (typeof runner.left != 'number') {
         runner = runner.left;
       }
-      console.log('  moved down left to leaf:');
-      console.dir(runner, { depth: 1 });
       runner.left += newValue;
     }
   }
@@ -217,20 +205,8 @@ function explodeNode(node: Node): void {
   while (head.parent) {
     head = head.parent;
   }
-
-  console.log(`Whole tree before exploding (${nodeToString(node)})`);
-  console.log(nodeToString(head));
-
   addToImmediateLeft(node, node.left as number);
-
-  console.log('Whole tree after adding left');
-  console.log(nodeToString(head));
-
   addToImmediateRight(node, node.right as number);
-
-  console.log('Whole tree after adding right');
-  console.log(nodeToString(head));
-
   const parent = node.parent as Node;
   if (parent.left == node) {
     parent.left = 0;
@@ -281,18 +257,7 @@ function reduceRoot(root: Node): void {
   const queue: Instruction[] = [];
 
   function reduce(node: Node, depth: number): null | Instruction {
-    console.log(`Reducing node at depth (${depth}): ${nodeToString(node)}`);
-
-    if (node.left && typeof node.left != 'number') {
-      console.log('  left sees parent:  ' + nodeToString(node.left.parent as Node));
-    } else {
-      console.log('  left  is value:  ' + node.left);
-    }
-    if (node.right && typeof node.right != 'number') {
-      console.log('  right sees parent: ' + nodeToString(node.right.parent as Node));
-    } else {
-      console.log('  right is value: ' + node.right);
-    }
+    //console.log(`Reducing node at depth (${depth}): ${nodeToString(node)}`);
 
     // Order of precedence for scenarios for instructions:
     //  - this node is leaf and it needs to be exploded
@@ -312,7 +277,6 @@ function reduceRoot(root: Node): void {
     }
 
     if (4 <= depth && isNumber(node.left) && isNumber(node.right)) {
-      console.log('  creating EXPLODE instruction');
       return {
         op: Operation.EXPLODE,
         node: node,
@@ -328,13 +292,11 @@ function reduceRoot(root: Node): void {
     } else if (instLeft) {
       return instLeft;
     } else if (isNumber(node.left) && 9 < node.left) {
-      console.log('  creating SPLIT_LEFT instruction');
       return {
         op: Operation.SPLIT_LEFT,
         node: node,
       };
     } else if (isNumber(node.right) && 9 < node.right) {
-      console.log('  creating SPLIT_RIGHT instruction');
       return {
         op: Operation.SPLIT_RIGHT,
         node: node,
@@ -362,7 +324,7 @@ function reduceRoot(root: Node): void {
     inst = reduce(root, 0);
   }
 
-  console.log(`Processed (${opCount}) instructions.`);
+  //console.log(`Processed (${opCount}) instructions.`);
 }
 
 
@@ -376,6 +338,7 @@ function day18_2(): void {
 
   let rowNode: Node;
   let colNode: Node;
+  let sumNode: Node;
   let row: number[];
   let loopMag = 0;
   let maxMag = 0;
@@ -383,9 +346,6 @@ function day18_2(): void {
   let idxMaxCol = 0;
  
   if (process.env.SNAILS) {
-    // 8 + 0
-    // [[[[7,8],[6,6]],[[6,0],[7,7]]],[[[7,8],[8,8]],[[7,9],[0,6]]]]
-    //
     const [ strIdxLeft, strIdxRight ] = process.env.SNAILS.split('-');
     const idxLeft = parseInt(strIdxLeft, 10);
     const idxRight = parseInt(strIdxRight, 10);
@@ -404,14 +364,16 @@ function day18_2(): void {
     console.log(`Magnitude: ${mag}`);
   } else {
     for (let r = 0; r < rootNodes.length; r++) {
-      console.log(`Will calc mags for snail (${r}): ${nodeToString(rootNodes[r])}`);
+      //console.log(`Will calc mags for snail (${r}): ${snailNumbers[r]}`);
       row = [];
       for (let c = 0; c < rootNodes.length; c++) {
         if (r != c) {
-          console.log(`  adding snail (${c}): ${nodeToString(rootNodes[c])}`);
-          rowNode = { ...rootNodes[r] };
-          colNode = { ...rootNodes[c] };
-          loopMag = calculateMagnitude(addNodes(rowNode, colNode));
+          //console.log(`  adding snail (${c}): ${snailNumbers[c]}`);
+          rowNode = getNodeFromSnailNumber(snailNumbers[r]);
+          colNode = getNodeFromSnailNumber(snailNumbers[c]);
+          sumNode = addNodes(rowNode, colNode);
+          reduceRoot(sumNode);
+          loopMag = calculateMagnitude(sumNode);
           row.push(loopMag);
           if (maxMag < loopMag) {
             maxMag = loopMag;
@@ -426,12 +388,17 @@ function day18_2(): void {
     console.log('All the Mags:');
     magnitudes.forEach(row => console.log(row.join(' ')));
 
+    rowNode = getNodeFromSnailNumber(snailNumbers[idxMaxRow]);
+    colNode = getNodeFromSnailNumber(snailNumbers[idxMaxCol]);
+
     console.log(`Row snail (${idxMaxRow}) for max mag:`);
-    console.log(nodeToString(rootNodes[idxMaxRow]));
+    console.log(nodeToString(rowNode));
     console.log(`Column snail (${idxMaxCol}) for max mag:`);
-    console.log(nodeToString(rootNodes[idxMaxCol]));
+    console.log(nodeToString(colNode));
     console.log('Result of row + column snails:');
-    console.log(nodeToString(addNodes(rootNodes[idxMaxRow], rootNodes[idxMaxCol])));
+    const finalNode = addNodes(rowNode, colNode);
+    reduceRoot(finalNode);
+    console.log(nodeToString(finalNode));
 
     console.log(`Found a max magnitude of (${maxMag})`);
   }
