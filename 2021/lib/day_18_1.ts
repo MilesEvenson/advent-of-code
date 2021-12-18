@@ -32,15 +32,9 @@ const INPUT_FULL = require('./data/day_18.input');
 // First idea:
 //  Tree where nodes have a reference to their parent
 //  to allow for easier traversal.
+//  --> WORKS AS EXPECTED
+//  --> FEELS GOOD TO HAVE A SMOOTH EXPERIENCE AFTER A ROUGH COUPLE DAYS
 //
-//
-//
-//
-// Complexity Analysis:
-//
-//  Time Complexity:
-//
-//  Space complexity:
 //
 //
 //
@@ -279,40 +273,77 @@ function addNodes(left: Node, right: Node): Node {
 }
 
 
+function calculateMagnitude(node: Node): number {
+  let total = 0;
+  if (typeof node.left == 'number') {
+    total += 3 * node.left;
+  } else {
+    total += 3 * calculateMagnitude(node.left);
+  }
+  if (typeof node.right == 'number') {
+    total += 2 * node.right;
+  } else {
+    total += 2 * calculateMagnitude(node.right);
+  }
+  return total;
+}
+
+
 function reduceRoot(root: Node): void {
   const queue: Instruction[] = [];
 
   function reduce(node: Node, depth: number): null | Instruction {
     console.log(`Reducing node at depth (${depth}): ${nodeToString(node)}`);
-    let nextInstruction = null;
+    // Order of precedence for scenarios for instructions:
+    //  - this node is leaf and it needs to be exploded
+    //  - a left descendant needs to be exploded
+    //  - a right descendant needs to be exploded
+    //  - a left descendant needs to be split
+    //  - this left needs to be split
+    //  - a right descendant needs to be split
+
     if (4 <= depth && isNumber(node.left) && isNumber(node.right)) {
       console.log('  creating EXPLODE instruction');
       return {
         op: Operation.EXPLODE,
         node: node,
       };
-    } else if (9 < node.left) {
+    }
+
+    let instLeft = null;
+    let instRight = null;
+    if (typeof node.left != 'number') {
+      instLeft = reduce(node.left, depth+1);
+      if (instLeft && instLeft.op == Operation.EXPLODE) {
+        return instLeft;
+      }
+    }
+
+    if (typeof node.right != 'number') {
+      instRight = reduce(node.right, depth+1);
+    }
+
+    if (instRight && instRight.op == Operation.EXPLODE) {
+      return instRight;
+    } else if (instLeft) {
+      return instLeft;
+    } else if (isNumber(node.left) && 9 < node.left) {
       console.log('  creating SPLIT_LEFT instruction');
       return {
         op: Operation.SPLIT_LEFT,
         node: node,
       };
-    } else if (9 < node.right) {
+    } else if (isNumber(node.right) && 9 < node.right) {
       console.log('  creating SPLIT_RIGHT instruction');
       return {
         op: Operation.SPLIT_RIGHT,
         node: node,
       };
+    } else if (instRight) {
+      return instRight;
     }
 
-    //console.log('  digging deeper');
-    if (typeof node.left != 'number') {
-      nextInstruction = reduce(node.left, depth+1);
-    }
-    if (nextInstruction == null && typeof node.right != 'number') {
-      nextInstruction = reduce(node.right, depth+1);
-    }
-    return nextInstruction;
+    return null;
   }
 
   let opCount = 0;
@@ -340,27 +371,24 @@ function day18_1(): void {
   console.log('Welcome to Day 18.1. Maybe too much nesting?');
 
   const numbers = getNumbers();
-  let result = getNodeFromSnailNumber(numbers.shift() as SnailNumber[][]);
+  let root = getNodeFromSnailNumber(numbers.shift() as SnailNumber[][]);
   let loopNode: Node;
   for (const snail of numbers) {
     loopNode = getNodeFromSnailNumber(snail);
     console.log('Adding:')
-    console.log(nodeToString(result));
+    console.log(nodeToString(root));
     console.log(nodeToString(loopNode));
-    result = addNodes(result, loopNode);
+    root = addNodes(root, loopNode);
     console.log('Got:');
-    console.log(nodeToString(result));
+    console.log(nodeToString(root));
     console.log('Reducing');
-    reduceRoot(result);
+    reduceRoot(root);
     console.log('Fully reduced:');
-    console.log(nodeToString(result) + '\n\n');
-
+    console.log(nodeToString(root) + '\n\n');
   }
 
-  let temp: Node;
-  let root: Node
-  //root = getNodeFromSnailNumber(numbers[0]);
-
+  const magnitude = calculateMagnitude(root); 
+  console.log(`Not too much nesting. Calculated a magnitude of (${magnitude})`);
 }
 
 
