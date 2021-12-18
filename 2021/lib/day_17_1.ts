@@ -167,16 +167,16 @@ function getCandidateYValues(targetTop: number, targetBottom: number): Record<nu
   // TODO: Verify this can handle negative values for vY0 (aka - direct shot at target)
 
   do {
-    maxY = T(yV0);
+    maxY = T(vY0);
     console.log(`  vY0 (${vY0}) with maxY (${maxY})`);
-    fallingStep = step + 1;
+    fallingStep = vY0 + 1;
     do {
       yFalling = vY0 - T(fallingStep);
       console.log(`  yFalling (${yFalling}) at falling step (${fallingStep})`);
       fallingStep++;
     } while (targetTop < yFalling);
     if (yFalling <= targetTop && targetBottom <= yFalling) {
-      values[vY0] = fallingStep + step;
+      values[vY0] = fallingStep + vY0;
     }
     vY0++;
   } while (targetBottom <= yFalling);
