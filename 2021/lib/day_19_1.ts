@@ -120,6 +120,14 @@ interface Scanner {
 }
 
 
+interface OverlapReport {
+  beacons: Beacon[];
+  primeFront?: Direction;
+  primeSpot?: Point;
+  primeUp?: Direction;
+}
+
+
 interface Scenario {
   label: string;
   overlap: number;
@@ -144,10 +152,7 @@ const SIMPLE_2D: Scenario = {
         { x:  2, y:   4, z: 0 },  // B1
         { x: -1, y:   0, z: 0 },  // B2
       ],
-      front: Direction.Yp,
       id: 0,
-      spot: { x: 0, y: 0, z: 0 },
-      up: Direction.Zp,
     },
 
     {
@@ -157,10 +162,7 @@ const SIMPLE_2D: Scenario = {
         { x: -3, y:   1, z: 0 },  // B0
         { x:  1, y:  -3, z: 0 },  // B3
       ],
-      front: Direction.Yp,
       id: 1,
-      spot: { x: 4, y: 1, z: 0 },
-      up: Direction.Zp,
     },
 
     {
@@ -170,10 +172,7 @@ const SIMPLE_2D: Scenario = {
         { x: -2, y:   3, z: 0 },  // B2
         { x: -2, y:  -2, z: 0 },  // B4
       ],
-      front: Direction.Yp,
       id: 2,
-      spot: { x: 1, y: -3, z: 0 },
-      up: Direction.Zp,
     },
   ],
 };
@@ -240,7 +239,84 @@ function getScenario(): Scenario {
 }
 
 
+function checkScannerOverlap(base: Scanner, prime: Scanner): OverlapReport {
+  const report: OverlapReport = {
+    beacons: [],
+  }
 
+  // I am **ASSUMING** that there is only 1 front-up orientation
+  // for prime that yields 12+ matching Beacon Points.
+
+  // TODO:
+  //  for each of 6 up directions
+  //    for each of 4 front directions (TODO: write this function)
+  //      calc offset of prime.beacons[0] to base.beacons[0]
+  //      compare each base.beacon to each prime.beacon
+  //        capture matching base beacon point
+  //      if 12+ total matching points
+  //        update report
+  //        break
+
+  return beacons;
+}
+
+
+function identifyAllDistinctBeacons(scenario: Scenario): Point[] {
+  const beacons: Beacon[][] = [];
+  let report: OverlapReport;
+  let totalMapped = 1;
+
+  scenario.scanners[0].spot = { x: 0, y: 0, z: 0 };
+  scenario.scanners[0].front = Direction.Yp;
+  scenario.scanners[0].up = Direction.Zp;
+
+  // TODO:  Compare each Scanner (prime) against Scanner0 (base).
+  //        If overlap, define prime's front and up relative to base.
+
+  for (let p = 1; p < scenario.scanners.length; p++) {
+    report = checkScannerOverlap(scenario.scanners[0], scenario.scanners[p]);
+    if (0 < report.beacons.length) {
+      scenario.scanners[p].front = report.front;
+      scenario.scanners[p].spot = report.spot;
+      scenario.scanners[p].up = report.up;
+      totalMapped++;
+    }
+    beacons.push(report.beacons);
+  }
+
+  // TODO: track pairs of checked scanners for intelligent skipping below.
+
+  while (totalMapped < scenario.scanners.length) {
+    for (let b = 1; b < scenario.scanners.length; b++) {
+      if (!scenario.scanners.spot) {
+        // Skip Scanners that have not yet been discovered and oriented.
+        continue;
+      }
+
+      for (let p = (b+1); p < scenario.scanners.length; p++) {
+        // TODO: skip primes that have already been checked against this base.
+
+        report = checkScannerOverlap(scenario.scanners[0], scenario.scanners[p]);
+        if (0 < report.beacons.length) {
+          // TODO: update this point to be relative to origin, NOT current base.
+          scenario.scanners[p].spot = report.spot;
+          // TODO: update these directions to be relative to origin, NOT current base.
+          scenario.scanners[p].front = report.front;
+          scenario.scanners[p].up = report.up;
+          totalMapped++;
+        }
+        // TODO: update this Points to be relative to origin, NOT current base.
+        beacons.push(report.beacons);
+      }
+    }
+  } // end - while
+
+
+
+  // TODO: flatten beacons
+
+  return beacons;
+}
 
 
 
