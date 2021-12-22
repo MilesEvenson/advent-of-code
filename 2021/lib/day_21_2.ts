@@ -70,6 +70,11 @@
 //    I've been resetting them, but I think that's wrong.
 //    I think new pawns should carry forward their ancestor's score.
 //
+//    Hmmmmm
+//    I'm still not seeing huge numbers.
+//    Maybe I need to branch each pawn each time the die is rolled
+//    for EITHER player.
+//
 //
 //
 //
