@@ -20,6 +20,20 @@ import path from 'path';
 //      - if all Zs were zero, DONE BREAK
 //
 //
+//  Brute force is too slow (~1sec to check ~100,000 model numbers).
+//
+//  What would working backwards look like?
+//    - start with sequence 13 (for the ones place)
+//    - reverse each instruction?
+//      - Do I have enough information for this?
+//        How do I reverse c = a % b?
+//
+//  Could I transform a sequence of instructions into a single equation?
+//  Can *I* figure out how to do that programmatically and in a timely fashion?
+//  Probably not.
+//
+//
+//
 //
 //
 // Reflections:
@@ -126,7 +140,7 @@ function arr2int(nums: number[]): number {
 }
 
 
-function findMaxModelNumber(checks: Instruction[][]): number {
+function findMaxModelNumber(allChecks: Instruction[][]): number {
   const MEM: Record<Register, number> = {
     w: 0,
     x: 0,
@@ -153,7 +167,7 @@ function findMaxModelNumber(checks: Instruction[][]): number {
     modelNumber.forEach((num, idxDigit) => {
       //console.log(`  checking digit (${num}) at (${idxDigit})`);
       let register: Register;
-      checks[idxDigit].forEach((inst) => {
+      allChecks[idxDigit].forEach((inst) => {
         register = inst.left;
         if (inst.op == 'inp') {
           MEM[register] = FN.inp(num, 0);
@@ -177,17 +191,13 @@ function findMaxModelNumber(checks: Instruction[][]): number {
       return counter;
     }
 
-    // TODO: handle 111 -> 108 properly
     for (let d = onesPlace; 0 <= d; d--) {
       modelNumber[d]--;
-      //console.log(`  Decrementing at ${d} to ${(counter-1)}`);
       if (modelNumber[d] == 0) {
-        //console.log(`    is zero`);
         for (let k = d; k < modelNumber.length; k++) {
           modelNumber[k] = 9;
         }
       } else {
-        //console.log(`    (${modelNumber[d]}) is non-zero, breaking`);
         break;
       }
     }
