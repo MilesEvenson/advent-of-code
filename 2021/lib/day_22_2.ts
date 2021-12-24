@@ -170,16 +170,9 @@ interface Shape {
 
 
 function parseLine(raw: string): Op {
-  // TODO: Only store the min/max instead of generating every point.
-  const chunks = raw.split(',');
-  const [ status, xChunk ] = chunks[0].split(' ');
-  const rangeX = rangeFromChunk(xChunk.substring(2));
-  const rangeY = rangeFromChunk(chunks[1].substring(2));
-  const rangeZ = rangeFromChunk(chunks[2].substring(2));
-  const keys: string[] = [];
   return {
-    status: status as Status,
-    keys: keys,
+    status: Status.OFF,
+    keys: [],
   };
 }
 
@@ -202,7 +195,7 @@ function day22_2(): void {
   console.log('Welcome to Day 22.2. Geometric operations in 3D space.');
 
   const allSteps = getSteps();
-
+  const totalCubesOn = 0;
   console.log(`Found (${totalCubesOn}) total ON cubes.`);
 }
 

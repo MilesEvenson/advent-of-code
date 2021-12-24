@@ -114,3 +114,9 @@ function day21_1(): void {
 
 day21_1();
 
+
+// One weird trick to prevent TypeScript compiler from
+// intermittently complaining about global declarations.
+// https://stackoverflow.com/a/50913569
+export {};
+
