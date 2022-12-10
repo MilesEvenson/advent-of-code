@@ -1,5 +1,6 @@
 import os
 
+from functools import cmp_to_key
 from pprint import PrettyPrinter
 
 
@@ -23,6 +24,23 @@ def load_session():
 
 def path(chunks):
     return '/{}'.format('/'.join(chunks))
+
+
+def sort_paths(a, b):
+    if a == '/':
+        return -1
+    elif b == '/':
+        return 1
+    else:
+        segments_a = len(a.split('/'))
+        segments_b = len(b.split('/'))
+        if segments_a < segments_b or segments_b < segments_a:
+            return segments_a - segments_b
+        else:
+            if a < b:
+                return -1
+            else:
+                return 1
 
 
 if __name__ == '__main__':
@@ -100,18 +118,44 @@ if __name__ == '__main__':
             print('Unknown format ({}) on line {}'.format(full_session[i], i))
         i += 1
 
-    dir_paths = [k for k in filesystem if filesystem[k]['type'] == 'directory']
-    dir_paths.sort(key=lambda p: len(p.split('/')), reverse=True)
-    pp.pprint(dir_paths)
     file_paths = [k for k in filesystem if filesystem[k]['type'] == 'file']
-    file_paths.sort(key=lambda p: len(p.split('/')), reverse=True)
+    file_paths.sort(key=cmp_to_key(sort_paths), reverse=True)
     pp.pprint(file_paths)
+
+    dir_paths = [k for k in filesystem if filesystem[k]['type'] == 'directory']
+    dir_paths.sort(key=cmp_to_key(sort_paths), reverse=True)
+    pp.pprint(dir_paths)
 
     pp.pprint(filesystem)
 
+    for p in file_paths:
+        chunks = p.split('/')
+        # remove trailing filename to get path to parent directory
+        chunks.pop()
+        parent_path = '/'
+        if 1 < len(chunks):
+            parent_path = '/'.join(chunks)
+        filesystem[parent_path]['size'] += filesystem[p]['size']
+
+    threshold = 100000
     small_dirpaths = []
     total_du = 0
-    print('Found {} small directories with total disk usage: '.format(
+    for p in dir_paths:
+        if filesystem[p]['size'] <= threshold:
+            small_dirpaths.append(p)
+            total_du += filesystem[p]['size']
+        if p != '/':
+            chunks = p.split('/')
+            # remove trailing filename to get path to parent directory
+            chunks.pop()
+            parent_path = '/'
+            if 1 < len(chunks):
+                parent_path = '/'.join(chunks)
+            filesystem[parent_path]['size'] += filesystem[p]['size']
+
+    pp.pprint(filesystem)
+
+    print('Found {} small directories with total disk usage: {}'.format(
         len(small_dirpaths), total_du))
 
 
