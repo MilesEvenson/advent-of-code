@@ -9,21 +9,31 @@
 
 #part1 > .solution {
   display: flex;
+  font-family: monospace;
+  font-size: 16px;
 }
 
 #part1 > .solution > .input-lines {
-  flex-grow: 1;
+  list-style-type: none;
+  padding-left: 0;
+  width: 32em;
 }
-#part1 > .solution > .parsed-numbers {
-  flex-grow: 1;
-}
-#part1 > .solution > .running-sum {
-  flex-grow: 1;
-}
-
 #part1 > .solution > .input-lines .number {
   font-weight: bold;
 }
+
+#part1 > .solution > .parsed-numbers {
+  list-style-type: none;
+  padding-left: 0;
+  text-align: right;
+  width: 8em;
+}
+
+#part1 > .solution > .running-sum {
+  margin-left: 4em;
+  text-align: right;
+}
+
 
 </style>
 
@@ -91,6 +101,9 @@ function clearPart1() {
 async function solvePart1() {
   const rawDataFull = getDay1Data();
   let sum = 0;
+  const queueInput = [];
+  const queueDigits = [];
+
   for (const line of rawDataFull) {
     const digitChars = [];
     const inputLine = document.createElement('li');
@@ -111,8 +124,21 @@ async function solvePart1() {
 
     sum += lineValue;
 
-    document.querySelector('#part1 .input-lines').appendChild(inputLine);
-    document.querySelector('#part1 .parsed-numbers').appendChild(digitLine);
+    queueInput.unshift(inputLine);
+    document.querySelector('#part1 .input-lines').prepend(inputLine);
+
+    queueDigits.unshift(digitLine);
+    document.querySelector('#part1 .parsed-numbers').prepend(digitLine);
+
+    let inputItemToRemove;
+    let digitItemToRemove;
+    if (queueInput.length === 11) {
+      inputItemToRemove = queueInput.pop();
+      document.querySelector('#part1 .input-lines').removeChild(inputItemToRemove);
+      digitItemToRemove = queueDigits.pop();
+      document.querySelector('#part1 .parsed-numbers').removeChild(digitItemToRemove);
+    }
+
     document.querySelector('#part1 .running-sum').textContent = sum;
 
     await sleep(10);
