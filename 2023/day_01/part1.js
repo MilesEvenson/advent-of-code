@@ -1,4 +1,4 @@
-function getDat1Data() {
+function getDay1Data() {
   return [
     "nkzjrdqrmpztpqninetwofour1znnkd",
     "s5sevenxrdfr4mhpstgbjcfqckronesix",
