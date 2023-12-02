@@ -7,28 +7,28 @@
 
 <style>
 
-#part1 .solution {
+#container .solution {
   display: flex;
   height: 30em;
 }
 
-#part1 .solution .game-list {
+#container .solution .game-list {
   width: 18em;
 }
 
-#part1 .solution .game-list .impossible,
-#part1 .solution .game-list .possible {
+#container .solution .game-list .impossible,
+#container .solution .game-list .possible {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25em;
   justify-content: flex-start;
 }
 
-#part1 .solution .board {
+#container .solution .board {
   width: 10em;
 }
 
-#part1 .solution .ruler-container {
+#container .solution .ruler-container {
   align-items: flex-end;
   display: flex;
   gap: 1em;
@@ -37,7 +37,7 @@
   text-align: center;
 }
 
-#part1 .solution .ruler {
+#container .solution .ruler {
   align-items: flex-end;
   display: flex;
   justify-content: center;
@@ -45,21 +45,21 @@
   width: 1em;
 }
 
-#part1 .solution .ruler.red {
+#container .solution .ruler.red {
   background-color: pink;
 }
-#part1 .solution .ruler.green {
+#container .solution .ruler.green {
   background-color: lightgreen;
 }
-#part1 .solution .ruler.blue {
+#container .solution .ruler.blue {
   background-color: lightskyblue;
 }
 
-#part1 .solution .ruler .count {
+#container .solution .ruler .count {
   margin: 0;
 }
 
-#part1 .solution .ruler .count.too-many {
+#container .solution .ruler .count.too-many {
   background-color: black;
   border-radius: 0.25em;
   color: white;
@@ -99,8 +99,8 @@ What are we illustrating here?
 
 -->
 
-<div id="part1">
-  <h1>Part 1 - Determining what's possible</h1>
+<div id="container">
+  <h1>Day 2 &ndash; The possible and the minimal</h1>
   <div class="controls">
 
     <!-- Data source select -->
@@ -166,7 +166,7 @@ What are we illustrating here?
     <button class="solve">Solve</button>
   </div>
 
-  <h2 class="answer"></h2>
+  <h2 class="answer-part1"></h2>
 
   <div class="solution">
     <div class="game-list">
@@ -192,9 +192,6 @@ What are we illustrating here?
 
 </div>
 
-<div id="part2">
-  <h1>Part 2 - ???</h1>
-</div>
 
 <script src="data.js" type="text/javascript"></script>
 <script src="sample.js" type="text/javascript"></script>
@@ -207,12 +204,12 @@ async function sleep(ms) {
 
 function resetPart1() {
   // TODO: reset counts
-  document.querySelector('#part1 .impossible').replaceChildren();
-  document.querySelector('#part1 .possible').replaceChildren();
+  document.querySelector('#container .impossible').replaceChildren();
+  document.querySelector('#container .possible').replaceChildren();
 }
 
 async function solvePart1() {
-  const dataSource = document.querySelector('#part1 [name="data-source"]:checked').value;
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
   const allGames = dataSource === 'sample'
     ? getSampleData()
     : getFullData();
@@ -227,32 +224,32 @@ async function solvePart1() {
     setId = 1;
     let withinLimits = true;
     for (const pull of game) {
-      document.querySelectorAll('#part1 .ruler .count')
+      document.querySelectorAll('#container .ruler .count')
         .forEach(node => node.classList.remove('too-many'));
-      document.querySelector('#part1 .board .game-id').textContent = `Game ${gameId}`;
-      document.querySelector('#part1 .board .set-id').textContent = `Set ${setId}`;
+      document.querySelector('#container .board .game-id').textContent = `Game ${gameId}`;
+      document.querySelector('#container .board .set-id').textContent = `Set ${setId}`;
       const countRed = pull.red ?? 0;
       const countGreen = pull.green ?? 0;
       const countBlue = pull.blue ?? 0;
 
       // determine if any color is over the limit and highlight accordingly
 
-      document.querySelector('#part1 .ruler.red .count').textContent = countRed;
-      document.querySelector('#part1 .ruler.red .count').style.marginBottom = `${countRed}em`;
+      document.querySelector('#container .ruler.red .count').textContent = countRed;
+      document.querySelector('#container .ruler.red .count').style.marginBottom = `${countRed}em`;
       if (maxRed < countRed) {
-        document.querySelector('#part1 .ruler.red .count').classList.add('too-many');
+        document.querySelector('#container .ruler.red .count').classList.add('too-many');
       }
 
-      document.querySelector('#part1 .ruler.green .count').textContent = countGreen;
-      document.querySelector('#part1 .ruler.green .count').style.marginBottom = `${countGreen}em`;
+      document.querySelector('#container .ruler.green .count').textContent = countGreen;
+      document.querySelector('#container .ruler.green .count').style.marginBottom = `${countGreen}em`;
       if (maxGreen < countGreen) {
-        document.querySelector('#part1 .ruler.green .count').classList.add('too-many');
+        document.querySelector('#container .ruler.green .count').classList.add('too-many');
       }
 
-      document.querySelector('#part1 .ruler.blue .count').textContent = countBlue;
-      document.querySelector('#part1 .ruler.blue .count').style.marginBottom = `${countBlue}em`;
+      document.querySelector('#container .ruler.blue .count').textContent = countBlue;
+      document.querySelector('#container .ruler.blue .count').style.marginBottom = `${countBlue}em`;
       if (maxBlue < countBlue) {
-        document.querySelector('#part1 .ruler.blue .count').classList.add('too-many');
+        document.querySelector('#container .ruler.blue .count').classList.add('too-many');
       }
 
       // short sleep
@@ -270,19 +267,20 @@ async function solvePart1() {
     const gameIdSpan = document.createElement('span');
     gameIdSpan.textContent = gameId;
     if (withinLimits) {
-      document.querySelector('#part1 .possible').appendChild(gameIdSpan);
+      document.querySelector('#container .possible').appendChild(gameIdSpan);
     } else {
-      document.querySelector('#part1 .impossible').appendChild(gameIdSpan);
+      document.querySelector('#container .impossible').appendChild(gameIdSpan);
     }
 
     gameId++;
   } // end - for game of allGames
 
   let answer = 0;
-  document.querySelectorAll('#part1 .game-list .possible span').forEach(
+  document.querySelectorAll('#container .game-list .possible span').forEach(
     (span) => (answer += parseInt(span.textContent, 10))
   );
-  document.querySelector('#part1 .answer').textContent = `Answer: ${answer}`;
+  document.querySelector('#container .answer-part1').textContent = `Sum of possible game IDs: ${answer}`;
+  // TODO state answer for part 2
 }
 
 
@@ -301,30 +299,30 @@ function setRulerHeight(selector, heightInEm) {
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
-  document.querySelector('#part1 .solve').addEventListener('click', () => {
+  document.querySelector('#container .solve').addEventListener('click', () => {
     resetPart1();
     solvePart1();
   });
   document.querySelector('#part1-color-red').addEventListener('change', function () {
-    setRulerHeight('#part1 .ruler.red', parseInt(this.value, 10));
+    setRulerHeight('#container .ruler.red', parseInt(this.value, 10));
   });
   document.querySelector('#part1-color-green').addEventListener('change', function () {
-    setRulerHeight('#part1 .ruler.green', parseInt(this.value, 10));
+    setRulerHeight('#container .ruler.green', parseInt(this.value, 10));
   });
   document.querySelector('#part1-color-blue').addEventListener('change', function () {
-    setRulerHeight('#part1 .ruler.blue', parseInt(this.value, 10));
+    setRulerHeight('#container .ruler.blue', parseInt(this.value, 10));
   });
 
   setRulerHeight(
-    '#part1 .ruler.red',
+    '#container .ruler.red',
     parseInt(document.querySelector('#part1-color-red').value, 10),
   );
   setRulerHeight(
-    '#part1 .ruler.green',
+    '#container .ruler.green',
     parseInt(document.querySelector('#part1-color-green').value, 10),
   );
   setRulerHeight(
-    '#part1 .ruler.blue',
+    '#container .ruler.blue',
     parseInt(document.querySelector('#part1-color-blue').value, 10),
   );
 });
