@@ -7,30 +7,34 @@
 
 <style>
 
-#part1 > .solution {
+#part1 > .solution,
+#part2 > .solution {
   display: flex;
   font-family: monospace;
   font-size: 16px;
 }
 
-#part1 > .solution > .input-lines {
+#part1 > .solution > .input-lines,
+#part2 > .solution > .input-lines {
   list-style-type: none;
   padding-left: 0;
   width: 32em;
 }
-#part1 > .solution > .input-lines .number:first-of-type,
-#part1 > .solution > .input-lines .number:last-of-type {
+#part1 .solution .input-lines .highlight,
+#part2 .solution .input-lines .highlight {
   font-weight: bold;
 }
 
-#part1 > .solution > .parsed-numbers {
+#part1 > .solution > .parsed-numbers,
+#part2 > .solution > .parsed-numbers {
   list-style-type: none;
   padding-left: 0;
   text-align: right;
   width: 8em;
 }
 
-#part1 > .solution > .running-sum {
+#part1 > .solution > .running-sum,
+#part2 > .solution > .running-sum {
   margin-left: 4em;
   text-align: right;
 }
@@ -63,11 +67,33 @@ Animation
 - update running sum with new total
 
 
+Part 2
+-------
+Must scan through possible numbers on each char in the line.
+check for digit first, then scan through number words.
+
+I think the display is unchanged.
+Still wrap each identified number in a span.
+
+
+
 
 -->
 
 <div id="part1">
   <h1>Part 1 - Parse and sum numbers</h1>
+  <div class="controls">
+    <button class="solve">Solve</button>
+  </div>
+  <div class="solution">
+    <ul class="input-lines"></ul>
+    <ul class="parsed-numbers"></ul>
+    <p class="running-sum"></p>
+  </div>
+</div>
+
+<div id="part2">
+  <h1>Part 2 - Words are numbers too</h1>
   <div class="controls">
     <button class="solve">Solve</button>
   </div>
@@ -108,6 +134,7 @@ async function solvePart1() {
   for (const line of rawDataFull) {
     let tensDigit = '';
     let onesDigit = '';
+    let onesSpan = null;
     const inputLine = document.createElement('li');
 
     line.split('').forEach(char => {
@@ -116,12 +143,14 @@ async function solvePart1() {
       if (!Number.isNaN(parseInt(char, 10))) {
         if (tensDigit === '') {
           tensDigit = char;
+          span.classList.add('highlight');
         }
-        onesDigit = char
-        span.classList.add('number');
+        onesDigit = char;
+        onesSpan = span;
       }
       inputLine.appendChild(span);
     });
+    onesSpan.classList.add('highlight');
 
     let lineValue = 0;
     if (tensDigit !== '') {
@@ -158,9 +187,177 @@ async function solvePart1() {
 }
 
 
+function clearPart2() {
+  document.querySelector('#part2 .input-lines').replaceChildren();
+  document.querySelector('#part2 .parsed-numbers').replaceChildren();
+  document.querySelector('#part2 .input-lines').replaceChildren();
+}
+
+
+async function solvePart2() {
+  const DIGITS = new Set(['0','1','2','3','4','5','6','7','8','9']);
+  const NUMBER_WORDS = [
+    'one',
+    'two',
+    'three',
+    'four',
+    'five',
+    'six',
+    'seven',
+    'eight',
+    'nine',
+  ];
+  const WORD_TO_DIGIT = {
+    one: '1',
+    two: '2',
+    three: '3',
+    four: '4',
+    five: '5',
+    six: '6',
+    seven: '7',
+    eight: '8',
+    nine: '9',
+  };
+
+  let sum = 0;
+  const queueInput = [];
+  const queueDigits = [];
+
+  const rawDataFull = getDay1Data();
+  for (const line of rawDataFull) {
+    let leftStart = 0;
+    let leftLength = 0;
+    let rightStart = 0;
+    let rightLength = 0;
+    let leftDigit = '';
+    let rightDigit = '';
+
+    // Identify the leftmost number in the line
+    for (let i = 0; i < line.length && leftLength === 0; i++) {
+      if (DIGITS.has(line[i])) {
+        leftDigit = line[i];
+        leftStart = i;
+        leftLength = 1;
+        break;
+      }
+      if (leftLength === 0) {
+        for (const word of NUMBER_WORDS) {
+          let j = 0;
+          while (j < word.length
+            && (i+j) < line.length
+            && line[i+j] === word[j]
+          ) {
+            j++;
+          }
+          if (j === word.length) {
+            leftDigit = WORD_TO_DIGIT[word];
+            leftStart = i;
+            leftLength = word.length;
+            break;
+          }
+        }
+      }
+    }
+
+    // Identify the rightmost number in the line
+    for (let i = line.length-1; (0 <= i) && rightLength === 0; i--) {
+      if (DIGITS.has(line[i] )) {
+        rightDigit = line[i];
+        rightStart = i;
+        rightLength = 1;
+        break;
+      }
+      if (rightLength === 0) {
+        for (const word of NUMBER_WORDS) {
+          let j = 0;
+          // Not ideal in terms of time complexity,
+          // but easier to read than starting at the end of each WORD.
+          while (j < word.length
+            && (i+j) < line.length
+            && line[i+j] === word[j]
+          ) {
+            j++;
+          }
+          if (j === word.length) {
+            rightDigit = WORD_TO_DIGIT[word];
+            rightStart = i;
+            rightLength = word.length;
+            break;
+          }
+        }
+      }
+    }
+
+    //console.log(`left(${leftDigit}), right(${rightDigit})`);
+
+    const renderedLine = document.createElement('li');
+
+    const prefix = document.createElement('span');
+    prefix.textContent = line.substring(0, leftStart);
+    renderedLine.appendChild(prefix);
+
+    const leftHighlight = document.createElement('span');
+    leftHighlight.classList.add('highlight');
+    leftHighlight.textContent = line.substring(leftStart, (leftStart+leftLength));
+    renderedLine.appendChild(leftHighlight);
+
+    if (leftStart !== rightStart) {
+      const middle = document.createElement('span');
+      middle.textContent = line.substring((leftStart+leftLength), rightStart);
+      renderedLine.appendChild(middle);
+
+      const rightHighlight = document.createElement('span');
+      rightHighlight.classList.add('highlight');
+      rightHighlight.textContent = line.substring(rightStart, (rightStart+rightLength));
+      renderedLine.appendChild(rightHighlight);
+    }
+
+    const suffix = document.createElement('span');
+    suffix.textContent = line.substring((rightStart+rightLength));
+    renderedLine.appendChild(suffix);
+
+    let lineValue = 0;
+    if (leftDigit !== '') {
+      const digitsToParse = [leftDigit, leftDigit];
+      if (rightDigit !== '') {
+        digitsToParse[1] = rightDigit;
+      }
+      lineValue = parseInt(digitsToParse.join(''), 10);
+    }
+    const digitLine = document.createElement('li');
+    digitLine.textContent = lineValue;
+
+    sum += lineValue;
+
+    queueInput.unshift(renderedLine);
+    document.querySelector('#part2 .input-lines').prepend(renderedLine);
+
+    queueDigits.unshift(digitLine);
+    document.querySelector('#part2 .parsed-numbers').prepend(digitLine);
+
+    let inputItemToRemove;
+    let digitItemToRemove;
+    if (queueInput.length === 11) {
+      inputItemToRemove = queueInput.pop();
+      document.querySelector('#part2 .input-lines').removeChild(inputItemToRemove);
+      digitItemToRemove = queueDigits.pop();
+      document.querySelector('#part2 .parsed-numbers').removeChild(digitItemToRemove);
+    }
+
+    document.querySelector('#part2 .running-sum').textContent = sum;
+
+    await sleep(5);
+  }
+}
+
+
 document.querySelector('#part1 .solve').addEventListener('click', () => {
   clearPart1();
   solvePart1();
+});
+document.querySelector('#part2 .solve').addEventListener('click', () => {
+  clearPart2();
+  solvePart2();
 });
 </script>
 
