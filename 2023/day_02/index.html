@@ -97,6 +97,12 @@ What are we illustrating here?
       - animate possible
 
 
+Part 2
+-------
+For each game, capture the max count for each color across all sets.
+Not feeling inspired to visualize per-game power.
+I'll just add another H2 with the part2 answer.
+
 -->
 
 <div id="container">
@@ -167,6 +173,7 @@ What are we illustrating here?
   </div>
 
   <h2 class="answer-part1"></h2>
+  <h2 class="answer-part2"></h2>
 
   <div class="solution">
     <div class="game-list">
@@ -196,19 +203,20 @@ What are we illustrating here?
 <script src="data.js" type="text/javascript"></script>
 <script src="sample.js" type="text/javascript"></script>
 
+
 <script type="text/javascript">
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function resetPart1() {
+function reset() {
   // TODO: reset counts
   document.querySelector('#container .impossible').replaceChildren();
   document.querySelector('#container .possible').replaceChildren();
 }
 
-async function solvePart1() {
+async function solveWholeDay() {
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
   const allGames = dataSource === 'sample'
     ? getSampleData()
@@ -218,9 +226,15 @@ async function solvePart1() {
   const maxGreen = parseInt(document.querySelector('#part1-color-green').value, 10);
   const maxBlue = parseInt(document.querySelector('#part1-color-blue').value, 10);
 
+  const powerPerGame = [];
+
   let gameId = 1;
   let setId = 1;
   for (const game of allGames) {
+    let powerRed = 0;
+    let powerGreen = 0;
+    let powerBlue = 0;
+
     setId = 1;
     let withinLimits = true;
     for (const pull of game) {
@@ -231,6 +245,10 @@ async function solvePart1() {
       const countRed = pull.red ?? 0;
       const countGreen = pull.green ?? 0;
       const countBlue = pull.blue ?? 0;
+
+      powerRed = Math.max(powerRed, countRed);
+      powerGreen = Math.max(powerGreen, countGreen);
+      powerBlue = Math.max(powerBlue, countBlue);
 
       // determine if any color is over the limit and highlight accordingly
 
@@ -258,11 +276,12 @@ async function solvePart1() {
       // If over the limit
       if (maxRed < countRed || maxGreen < countGreen || maxBlue < countBlue) {
         withinLimits = false;
-        break;
       }
 
       setId++;
     } // end - for pull of game
+
+    powerPerGame.push({ powerRed, powerGreen, powerBlue });
 
     const gameIdSpan = document.createElement('span');
     gameIdSpan.textContent = gameId;
@@ -275,21 +294,19 @@ async function solvePart1() {
     gameId++;
   } // end - for game of allGames
 
-  let answer = 0;
+  let sumOfGameIds = 0;
   document.querySelectorAll('#container .game-list .possible span').forEach(
-    (span) => (answer += parseInt(span.textContent, 10))
+    (span) => (sumOfGameIds += parseInt(span.textContent, 10))
   );
-  document.querySelector('#container .answer-part1').textContent = `Sum of possible game IDs: ${answer}`;
+  document.querySelector('#container .answer-part1').textContent = `Sum of possible game IDs: ${sumOfGameIds}`;
+
+  powerPerGame.forEach(({ powerRed, powerGreen, powerBlue }) => console.log(`${(powerRed * powerGreen * powerBlue)} <= ${powerRed} * ${powerGreen} * ${powerBlue}`));
   // TODO state answer for part 2
-}
-
-
-function clearPart2() {
-}
-
-
-async function solvePart2() {
-  console.log('TODO: read and solve part 2');
+  const totalPower = powerPerGame.reduce(
+    (sum, { powerRed, powerGreen, powerBlue}) => (sum + (powerRed * powerGreen * powerBlue)),
+    0,
+  );
+  document.querySelector('#container .answer-part2').textContent = `Sum of powers of all games: ${totalPower}`;
 }
 
 
@@ -300,8 +317,8 @@ function setRulerHeight(selector, heightInEm) {
 
 document.addEventListener('DOMContentLoaded', (event) => {
   document.querySelector('#container .solve').addEventListener('click', () => {
-    resetPart1();
-    solvePart1();
+    reset();
+    solveWholeDay();
   });
   document.querySelector('#part1-color-red').addEventListener('change', function () {
     setRulerHeight('#container .ruler.red', parseInt(this.value, 10));
