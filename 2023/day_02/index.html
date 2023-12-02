@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<title>Day 2</title>
+
+<style>
+
+#part1 .solution {
+  display: flex;
+  height: 30em;
+}
+
+#part1 .solution .ruler {
+  padding: 0.25em;
+  width: 1em;
+}
+
+#part1 .solution .ruler.red {
+  background-color: pink;
+}
+#part1 .solution .ruler.green {
+  background-color: lightgreen;
+}
+#part1 .solution .ruler.blue {
+  background-color: lightskyblue;
+}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<!--
+
+Part 1
+-------
+
+The full input is only 100 lines so I have more space and time to work with today.
+What are we illustrating here?
+- caps on number of stones of each color
+- sets pulled for a given game
+- game IDs that are possible
+- game IDs that are impossible
+
+
+- For each game
+  - for each set
+    - show count of each color
+    - if any value is over the threshold
+      - animate impossible
+      - continue to next game
+    - if all sets "fit"
+      - animate possible
+
+
+-->
+
+<div id="part1">
+  <h1>Part 1 - Determining what's possible</h1>
+  <div class="controls">
+
+    <!-- Data source select -->
+    <div class="control-group">
+      <label for="data-source-sample">
+        <input
+          checked
+          id="data-source-sample"
+          name="data-source"
+          type="radio"
+          value="sample"
+        />
+        Sample
+      </label>
+      <label for="data-source-full">
+        <input
+          id="data-source-full"
+          name="data-source"
+          type="radio"
+          value="full"
+        />
+        Full
+      </label>
+    </div>
+
+    <!-- Set how many stones of each color are in the bag -->
+    <div class="control-group">
+      <label for="part1-color-red">
+        Red:&nbsp;
+        <input
+          id="part1-color-red"
+          max="20"
+          min="0"
+          name="part1-color-red"
+          type="number"
+          value="12"
+        />
+      </label>
+      <label for="part1-color-green">
+        Green:&nbsp;
+        <input
+          id="part1-color-green"
+          max="20"
+          min="0"
+          name="part1-color-green"
+          type="number"
+          value="13"
+        />
+      </label>
+      <label for="part1-color-blue">
+        Blue:&nbsp;
+        <input
+          id="part1-color-blue"
+          max="20"
+          min="0"
+          name="part1-color-blue"
+          type="number"
+          value="14"
+        />
+      </label>
+    </div>
+
+    <button class="solve">Solve</button>
+  </div>
+
+  <div class="solution">
+    <div class="game-list">
+      <h2>Impossible Games</h2>
+      <ul class="impossible"></ul>
+    </div>
+
+    <div class="board">
+      <h2>Pulls</h2>
+      <div class="rulers">
+        <div class="ruler red" data-color="red"></div>
+        <div class="ruler green" data-color="green"></div>
+        <div class="ruler blue" data-color="blue"></div>
+      </div>
+    </div>
+
+    <div class="game-list">
+      <h2>Possible Games</h2>
+      <ul class="possible"></ul>
+    </div>
+  </div>
+
+</div>
+
+<div id="part2">
+  <h1>Part 2 - ???</h1>
+</div>
+
+<script src="data.js" type="text/javascript"></script>
+<script src="sample.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function resetPart1() {
+  // TODO: reset counts
+  document.querySelector('#part1 .impossible').replaceChildren();
+  document.querySelector('#part1 .possible').replaceChildren();
+}
+
+async function solvePart1() {
+}
+
+
+function clearPart2() {
+}
+
+
+async function solvePart2() {
+  console.log('TODO: read and solve part 2');
+}
+
+
+document.querySelector('#part1 .solve').addEventListener('click', () => {
+  resetPart1();
+  solvePart1();
+});
+document.querySelector('#part1-color-red').addEventListener('change', function () {
+  document.querySelector('#part1 .ruler.red').style.height = `${this.value}em`;
+});
+document.querySelector('#part1-color-green').addEventListener('change', function () {
+  document.querySelector('#part1 .ruler.green').style.height = `${this.value}em`;
+});
+document.querySelector('#part1-color-blue').addEventListener('change', function () {
+  document.querySelector('#part1 .ruler.blue').style.height = `${this.value}em`;
+});
+
+
+
+// document.querySelector('#part2 .solve').addEventListener('click', () => {
+//   clearPart2();
+//   solvePart2();
+// });
+</script>
+
+</body>
+
+</html>
+
