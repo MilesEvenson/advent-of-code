@@ -12,6 +12,19 @@
   height: 30em;
 }
 
+#part1 .solution .game-list {
+  width: 18em;
+}
+
+#part1 .solution .board {
+  width: 10em;
+}
+
+#part1 .solution .ruler-container {
+  align-items: flex-end;
+  display: flex;
+}
+
 #part1 .solution .ruler {
   padding: 0.25em;
   width: 1em;
@@ -130,12 +143,13 @@ What are we illustrating here?
   <div class="solution">
     <div class="game-list">
       <h2>Impossible Games</h2>
-      <ul class="impossible"></ul>
+      <p class="impossible"></p>
     </div>
 
     <div class="board">
-      <h2>Pulls</h2>
-      <div class="rulers">
+      <h2 class="game-id">Game ___</h2>
+      <h3 class="set-id">Set _</h3>
+      <div class="ruler-container">
         <div class="ruler red" data-color="red"></div>
         <div class="ruler green" data-color="green"></div>
         <div class="ruler blue" data-color="blue"></div>
@@ -144,7 +158,7 @@ What are we illustrating here?
 
     <div class="game-list">
       <h2>Possible Games</h2>
-      <ul class="possible"></ul>
+      <p class="possible"></p>
     </div>
   </div>
 
@@ -170,6 +184,29 @@ function resetPart1() {
 }
 
 async function solvePart1() {
+  const dataSource = document.querySelector('#part1 [name="data-source"]:checked').value;
+  const allGames = dataSource === 'sample'
+    ? getSampleData()
+    : getFullData();
+
+  let gameId = 1;
+  let setId = 1;
+  for (const game of allGames) {
+    setId = 1;
+    for (const pull of game) {
+      document.querySelector('#part1 .board .game-id').textContent = `Game ${gameId}`;
+      document.querySelector('#part1 .board .set-id').textContent = `Set ${setId}`;
+      const countRed = pull.red ?? 0;
+      const countGreen = pull.green ?? 0;
+      const countBlue = pull.blue ?? 0;
+      document.querySelector('#part1 .ruler.red').textContent = countRed;
+      document.querySelector('#part1 .ruler.green').textContent = countGreen;
+      document.querySelector('#part1 .ruler.blue').textContent = countBlue;
+      setId++;
+      await sleep(100);
+    }
+    gameId++;
+  }
 }
 
 
@@ -182,26 +219,31 @@ async function solvePart2() {
 }
 
 
-document.querySelector('#part1 .solve').addEventListener('click', () => {
-  resetPart1();
-  solvePart1();
-});
-document.querySelector('#part1-color-red').addEventListener('change', function () {
-  document.querySelector('#part1 .ruler.red').style.height = `${this.value}em`;
-});
-document.querySelector('#part1-color-green').addEventListener('change', function () {
-  document.querySelector('#part1 .ruler.green').style.height = `${this.value}em`;
-});
-document.querySelector('#part1-color-blue').addEventListener('change', function () {
-  document.querySelector('#part1 .ruler.blue').style.height = `${this.value}em`;
-});
+function setRulerHeight(selector, heightInEm) {
+  document.querySelector(selector).style.height = `${heightInEm}em`;
+}
 
 
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelector('#part1 .solve').addEventListener('click', () => {
+    resetPart1();
+    solvePart1();
+  });
+  document.querySelector('#part1-color-red').addEventListener('change', function () {
+    setRulerHeight('#part1 .ruler.red', this.value);
+  });
+  document.querySelector('#part1-color-green').addEventListener('change', function () {
+    setRulerHeight('#part1 .ruler.green', this.value);
+  });
+  document.querySelector('#part1-color-blue').addEventListener('change', function () {
+    setRulerHeight('#part1 .ruler.blue', this.value);
+  });
 
-// document.querySelector('#part2 .solve').addEventListener('click', () => {
-//   clearPart2();
-//   solvePart2();
-// });
+  setRulerHeight('#part1 .ruler.red', document.querySelector('#part1-color-red').value);
+  setRulerHeight('#part1 .ruler.green', document.querySelector('#part1-color-green').value);
+  setRulerHeight('#part1 .ruler.blue', document.querySelector('#part1-color-blue').value);
+});
+
 </script>
 
 </body>
