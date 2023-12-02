@@ -16,6 +16,14 @@
   width: 18em;
 }
 
+#part1 .solution .game-list .impossible,
+#part1 .solution .game-list .possible {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em;
+  justify-content: flex-start;
+}
+
 #part1 .solution .board {
   width: 10em;
 }
@@ -23,9 +31,16 @@
 #part1 .solution .ruler-container {
   align-items: flex-end;
   display: flex;
+  gap: 1em;
+  height: 21em;
+  justify-content: flex-start;
+  text-align: center;
 }
 
 #part1 .solution .ruler {
+  align-items: flex-end;
+  display: flex;
+  justify-content: center;
   padding: 0.25em;
   width: 1em;
 }
@@ -38,6 +53,17 @@
 }
 #part1 .solution .ruler.blue {
   background-color: lightskyblue;
+}
+
+#part1 .solution .ruler .count {
+  margin: 0;
+}
+
+#part1 .solution .ruler .count.too-many {
+  background-color: black;
+  border-radius: 0.25em;
+  color: white;
+  padding: 0.2em 0.3em;
 }
 
 </style>
@@ -140,25 +166,27 @@ What are we illustrating here?
     <button class="solve">Solve</button>
   </div>
 
+  <h2 class="answer"></h2>
+
   <div class="solution">
     <div class="game-list">
       <h2>Impossible Games</h2>
-      <p class="impossible"></p>
+      <div class="impossible"></div>
     </div>
 
     <div class="board">
       <h2 class="game-id">Game ___</h2>
       <h3 class="set-id">Set _</h3>
       <div class="ruler-container">
-        <div class="ruler red" data-color="red"></div>
-        <div class="ruler green" data-color="green"></div>
-        <div class="ruler blue" data-color="blue"></div>
+        <div class="ruler red" data-color="red"><p class="count"></p></div>
+        <div class="ruler green" data-color="green"><p class="count"></p></div>
+        <div class="ruler blue" data-color="blue"><p class="count"></p></div>
       </div>
     </div>
 
     <div class="game-list">
       <h2>Possible Games</h2>
-      <p class="possible"></p>
+      <div class="possible"></div>
     </div>
   </div>
 
@@ -189,24 +217,72 @@ async function solvePart1() {
     ? getSampleData()
     : getFullData();
 
+  const maxRed = parseInt(document.querySelector('#part1-color-red').value, 10);
+  const maxGreen = parseInt(document.querySelector('#part1-color-green').value, 10);
+  const maxBlue = parseInt(document.querySelector('#part1-color-blue').value, 10);
+
   let gameId = 1;
   let setId = 1;
   for (const game of allGames) {
     setId = 1;
+    let withinLimits = true;
     for (const pull of game) {
+      document.querySelectorAll('#part1 .ruler .count')
+        .forEach(node => node.classList.remove('too-many'));
       document.querySelector('#part1 .board .game-id').textContent = `Game ${gameId}`;
       document.querySelector('#part1 .board .set-id').textContent = `Set ${setId}`;
       const countRed = pull.red ?? 0;
       const countGreen = pull.green ?? 0;
       const countBlue = pull.blue ?? 0;
-      document.querySelector('#part1 .ruler.red').textContent = countRed;
-      document.querySelector('#part1 .ruler.green').textContent = countGreen;
-      document.querySelector('#part1 .ruler.blue').textContent = countBlue;
-      setId++;
+
+      // determine if any color is over the limit and highlight accordingly
+
+      document.querySelector('#part1 .ruler.red .count').textContent = countRed;
+      document.querySelector('#part1 .ruler.red .count').style.marginBottom = `${countRed}em`;
+      if (maxRed < countRed) {
+        document.querySelector('#part1 .ruler.red .count').classList.add('too-many');
+      }
+
+      document.querySelector('#part1 .ruler.green .count').textContent = countGreen;
+      document.querySelector('#part1 .ruler.green .count').style.marginBottom = `${countGreen}em`;
+      if (maxGreen < countGreen) {
+        document.querySelector('#part1 .ruler.green .count').classList.add('too-many');
+      }
+
+      document.querySelector('#part1 .ruler.blue .count').textContent = countBlue;
+      document.querySelector('#part1 .ruler.blue .count').style.marginBottom = `${countBlue}em`;
+      if (maxBlue < countBlue) {
+        document.querySelector('#part1 .ruler.blue .count').classList.add('too-many');
+      }
+
+      // short sleep
       await sleep(100);
+
+      // If over the limit
+      if (maxRed < countRed || maxGreen < countGreen || maxBlue < countBlue) {
+        withinLimits = false;
+        break;
+      }
+
+      setId++;
+    } // end - for pull of game
+
+    const gameIdSpan = document.createElement('span');
+    gameIdSpan.textContent = gameId;
+    if (withinLimits) {
+      document.querySelector('#part1 .possible').appendChild(gameIdSpan);
+    } else {
+      document.querySelector('#part1 .impossible').appendChild(gameIdSpan);
     }
+
     gameId++;
-  }
+  } // end - for game of allGames
+
+  let answer = 0;
+  document.querySelectorAll('#part1 .game-list .possible span').forEach(
+    (span) => (answer += parseInt(span.textContent, 10))
+  );
+  document.querySelector('#part1 .answer').textContent = `Answer: ${answer}`;
 }
 
 
@@ -220,7 +296,7 @@ async function solvePart2() {
 
 
 function setRulerHeight(selector, heightInEm) {
-  document.querySelector(selector).style.height = `${heightInEm}em`;
+  document.querySelector(selector).style.height = `${(1+heightInEm)}em`;
 }
 
 
@@ -230,18 +306,27 @@ document.addEventListener('DOMContentLoaded', (event) => {
     solvePart1();
   });
   document.querySelector('#part1-color-red').addEventListener('change', function () {
-    setRulerHeight('#part1 .ruler.red', this.value);
+    setRulerHeight('#part1 .ruler.red', parseInt(this.value, 10));
   });
   document.querySelector('#part1-color-green').addEventListener('change', function () {
-    setRulerHeight('#part1 .ruler.green', this.value);
+    setRulerHeight('#part1 .ruler.green', parseInt(this.value, 10));
   });
   document.querySelector('#part1-color-blue').addEventListener('change', function () {
-    setRulerHeight('#part1 .ruler.blue', this.value);
+    setRulerHeight('#part1 .ruler.blue', parseInt(this.value, 10));
   });
 
-  setRulerHeight('#part1 .ruler.red', document.querySelector('#part1-color-red').value);
-  setRulerHeight('#part1 .ruler.green', document.querySelector('#part1-color-green').value);
-  setRulerHeight('#part1 .ruler.blue', document.querySelector('#part1-color-blue').value);
+  setRulerHeight(
+    '#part1 .ruler.red',
+    parseInt(document.querySelector('#part1-color-red').value, 10),
+  );
+  setRulerHeight(
+    '#part1 .ruler.green',
+    parseInt(document.querySelector('#part1-color-green').value, 10),
+  );
+  setRulerHeight(
+    '#part1 .ruler.blue',
+    parseInt(document.querySelector('#part1-color-blue').value, 10),
+  );
 });
 
 </script>
