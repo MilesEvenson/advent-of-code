@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="utf-8">
-<title>Day 2</title>
+<title>Day 3 | 2023</title>
 
 <style>
 
@@ -11,6 +11,16 @@
   font-family: monospace;
   /* Yields a table that is ~1200px wide with the full input */
   font-size: 8px;
+}
+
+.visualization td {
+  background-color: white;
+  transition: background-color 200ms;
+}
+
+.visualization td.cursor {
+  background-color: lightskyblue;
+  transition: background-color 10ms;
 }
 
 
@@ -113,15 +123,26 @@ function reset() {
 
 
 function populateTable(data) {
+  let r = 0;
+  let c = 0;
   for (const line of data) {
     const row = document.createElement('tr');
+    c = 0;
     for (const char of line) {
       const cell = document.createElement('td');
+      cell.id = `cell-${r}-${c}`;
       cell.textContent = char;
       row.appendChild(cell);
+      c++;
     }
     document.querySelector('.visualization tbody').appendChild(row);
+    r++;
   }
+}
+
+
+function isDigit(char) {
+  return (48 <= char.charCodeAt(0) && char.charCodeAt(0) <= 57);
 }
 
 
@@ -130,7 +151,18 @@ async function solveWholeDay() {
   const schematic = dataSource === 'sample'
     ? getSampleData()
     : getFullData();
-    populateTable(schematic);
+  populateTable(schematic);
+
+  for (let r = 0; r < schematic.length; r++) {
+    for (let c = 0; c < schematic[r].length; c++) {
+      const cell = document.getElementById(`cell-${r}-${c}`)
+      cell.classList.add('cursor');
+      await sleep(100);
+      if (!isDigit(cell.textContent)) {
+        cell.classList.remove('cursor');
+      }
+    }
+  }
 }
 
 
