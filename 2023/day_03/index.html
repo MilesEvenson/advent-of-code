@@ -106,6 +106,18 @@ Part 2
         Full
       </label>
     </div>
+    <div class="control-group">
+      <label for="use-animation">
+        <input
+          checked
+          id="use-animation"
+          name="use-animation"
+          type="checkbox"
+          value="on"
+        />
+        Animate?
+      </label>
+    </div>
 
     <button class="solve">Solve</button>
   </div>
@@ -233,6 +245,7 @@ async function solveWholeDay() {
   const schematic = dataSource === 'sample'
     ? getSampleData()
     : getFullData();
+  const useAnimation = !!document.getElementById('use-animation').checked
   populateTable(schematic);
 
   let runningSum = 0
@@ -246,7 +259,7 @@ async function solveWholeDay() {
       const cell = document.getElementById(`cell-${r}-${c}`)
       cell.classList.add('cursor');
 
-      if (dataSource === 'sample') {
+      if (useAnimation) {
         await sleep(100);
       }
 
@@ -270,20 +283,20 @@ async function solveWholeDay() {
               n.classList.remove('scan');
               n.classList.add('symbol');
               foundSymbol = true;
-              if (dataSource === 'sample') {
+              if (useAnimation) {
                 await sleep(50);
               }
               break;
             } else {
-              if (!isDigit(schematic[nr][nc]) && dataSource === 'sample') {
+              if (!isDigit(schematic[nr][nc]) && useAnimation) {
                 n.classList.add('scan');
               }
             }
-            if (dataSource === 'sample') {
+            if (useAnimation) {
               await sleep(50);
             }
           }
-          if (dataSource === 'sample') {
+          if (useAnimation) {
             document.querySelectorAll('.visualization .scan')
               .forEach(node => node.classList.remove('scan'));
             await sleep(10);
