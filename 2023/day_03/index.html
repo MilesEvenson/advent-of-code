@@ -77,6 +77,12 @@ Animations
 
 Part 2
 -------
+- scan for asterisks
+- count digit chars in 8 surrounding cells
+- if exactly 2 digits
+  - parse numbers
+  - store for math later
+- math all the gears
 
 -->
 
@@ -119,7 +125,8 @@ Part 2
       </label>
     </div>
 
-    <button class="solve">Solve</button>
+    <button id="solve-part1">Solve Part 1</button>
+    <button id="solve-part2">Solve Part 2</button>
   </div>
 
   <h2 id="answer-part1">Sum:</h2>
@@ -239,7 +246,7 @@ function getSurroundingCoords(coords, maxRow, maxCol) {
 }
 
 
-async function solveWholeDay() {
+async function solvePart1() {
   const startTime = Date.now();
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
   const schematic = dataSource === 'sample'
@@ -274,7 +281,7 @@ async function solveWholeDay() {
 
         if (digits.length) {
           // identify surrounding coords
-          const neighbors = getSurroundingCoords(coords, schematic.length-1, schematic[0].length-1);
+          const neighbors = getSurroundingCoords(coords, schematic.length-1, schematic[r].length-1);
           let foundSymbol = false;
           for (const [nr, nc] of neighbors) {
             const n = document.getElementById(`cell-${nr}-${nc}`);
@@ -327,10 +334,125 @@ async function solveWholeDay() {
 }
 
 
+async function solvePart2() {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const schematic = dataSource === 'sample'
+    ? getSampleData()
+    : getFullData();
+  const useAnimation = !!document.getElementById('use-animation').checked
+  populateTable(schematic);
+
+  await sleep(500);
+
+  // for rows
+  //  for cols
+  //    if asterisk
+  //      scan 8 for digits
+
+  let pairs = [];
+
+  for (let r = 0; r < schematic.length; r++) {
+    for (let c = 0; c < schematic[r].length; c++) {
+      const cell = document.getElementById(`cell-${r}-${c}`)
+      if (schematic[r][c] !== '*' && !cell.classList.contains('processed')) {
+        cell.classList.add('cursor');
+      }
+
+      if (useAnimation) {
+        await sleep(100);
+      }
+
+      if (schematic[r][c] === '*') {
+        cell.classList.add('symbol');
+        const neighbors = getSurroundingCoords([[r, c]], schematic.length-1, schematic[0].length-1);
+        let both = false;
+
+        const gearNumberCoords = [];
+        const gearNumbers = [];
+        for (const [nr, nc] of neighbors) {
+          const n = document.getElementById(`cell-${nr}-${nc}`);
+          if (isDigit(schematic[nr][nc]) && ! n.classList.contains('processed')) {
+            gearNumberCoords.push([nr, nc]);
+            n.classList.remove('cursor');
+            n.classList.add('scan');
+            n.classList.add('processed');
+
+            const scanDigits = [ schematic[nr][nc] ];
+
+            // scan left
+            let peekCol = nc - 1;
+            while (0 <= peekCol && isDigit(schematic[nr][peekCol])) {
+              document.getElementById(`cell-${nr}-${peekCol}`)
+                .classList.add('processed', 'scan');
+              gearNumberCoords.push([nr, peekCol]);
+              scanDigits.unshift(schematic[nr][peekCol]);
+              peekCol--;
+              if (useAnimation) {
+                await sleep(50);
+              }
+            }
+
+            // scan right
+            peekCol = nc + 1;
+            while (peekCol < schematic[nr].length && isDigit(schematic[nr][peekCol])) {
+              document.getElementById(`cell-${nr}-${peekCol}`)
+                .classList.add('processed', 'scan');
+              gearNumberCoords.push([nr, peekCol]);
+              scanDigits.push(schematic[nr][peekCol]);
+              peekCol++;
+              if (useAnimation) {
+                await sleep(50);
+              }
+            }
+
+            gearNumbers.push(parseInt(scanDigits.join(''), 10));
+            // Stop scanning if we find an asterisk with at least 3 adjacent numbers.
+            if (gearNumbers.length === 3) {
+              break;
+            }
+          }
+
+          if (useAnimation) {
+            await sleep(50);
+          }
+        }
+
+        if (gearNumbers.length === 2) {
+          pairs.push(gearNumbers);
+        } else {
+          gearNumberCoords.forEach(([r, c]) => (
+            document.getElementById(`cell-${r}-${r}`).classList.remove('processed', 'scan')
+          ));
+          if (useAnimation) {
+            await sleep(50);
+          }
+        }
+      } else {
+        cell.classList.remove('cursor');
+      }
+
+    }
+  }
+
+  const answerPart2 = pairs.reduce(
+    (sum, [a, b]) => (sum + (a * b)),
+    0,
+  );
+  document.getElementById('answer-part2').textContent = `Sum: ${answerPart2}`;
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+
 document.addEventListener('DOMContentLoaded', (event) => {
-  document.querySelector('#container .solve').addEventListener('click', () => {
+  document.getElementById('solve-part1').addEventListener('click', () => {
     reset();
-    solveWholeDay();
+    solvePart1();
+  });
+  document.getElementById('solve-part2').addEventListener('click', () => {
+    reset();
+    solvePart2();
   });
 });
 
