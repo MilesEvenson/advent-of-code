@@ -363,20 +363,19 @@ async function solvePart2() {
         await sleep(100);
       }
 
+      const gearNumberCoords = [];
+      const gearNumbers = [];
       if (schematic[r][c] === '*') {
         cell.classList.add('symbol');
         const neighbors = getSurroundingCoords([[r, c]], schematic.length-1, schematic[0].length-1);
         let both = false;
 
-        const gearNumberCoords = [];
-        const gearNumbers = [];
         for (const [nr, nc] of neighbors) {
           const n = document.getElementById(`cell-${nr}-${nc}`);
           if (isDigit(schematic[nr][nc]) && ! n.classList.contains('processed')) {
             gearNumberCoords.push([nr, nc]);
             n.classList.remove('cursor');
-            n.classList.add('scan');
-            n.classList.add('processed');
+            n.classList.add('processed', 'scan');
 
             const scanDigits = [ schematic[nr][nc] ];
 
@@ -407,6 +406,7 @@ async function solvePart2() {
             }
 
             gearNumbers.push(parseInt(scanDigits.join(''), 10));
+
             // Stop scanning if we find an asterisk with at least 3 adjacent numbers.
             if (gearNumbers.length === 3) {
               break;
@@ -422,7 +422,7 @@ async function solvePart2() {
           pairs.push(gearNumbers);
         } else {
           gearNumberCoords.forEach(([r, c]) => (
-            document.getElementById(`cell-${r}-${r}`).classList.remove('processed', 'scan')
+            document.getElementById(`cell-${r}-${c}`).classList.remove('processed', 'scan')
           ));
           if (useAnimation) {
             await sleep(50);
