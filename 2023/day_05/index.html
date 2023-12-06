@@ -20,10 +20,18 @@ Part 1
 -------
 
 Solution
-- build the maps
-  - some kind of data structure to handle
-    - sequence values
-    - unmapped "pass through" values
+
+could sort ranges by source start value and then binary search.
+For simplicity, I'm just scanning all the ranges anyways, so skip the sort.
+
+For each map
+  parse ranges
+  for each seed
+    scan ranges
+      if range match
+        update seed value
+    remember we use passthrough "mapping" and seed value is unchanged if no range match
+
 
 
 Visualization
@@ -114,32 +122,45 @@ function reset() {
 }
 
 
-function populateTable(data) {
-  let r = 0;
-  let c = 0;
-  for (const line of data) {
-    const row = document.createElement('tr');
-    c = 0;
-    for (const char of line) {
-      const cell = document.createElement('td');
-      cell.id = `cell-${r}-${c}`;
-      cell.textContent = char;
-      row.appendChild(cell);
-      c++;
-    }
-    document.querySelector('.visualization tbody').appendChild(row);
-    r++;
+function buildRanges(rawLines) {
+  const ranges = [];
+  for (const line of rawLines) {
+    const strs = line.split(' ');
+    const [destStart, sourceStart, count] = line.split(' ').map(s => parseInt(s, 10));
+    ranges.push({
+      destStart,
+      count,
+      offset: (destStart - sourceStart),
+      sourceStart,
+      sourceEnd: (sourceStart + count),
+    });
   }
+  return ranges;
 }
 
 
 async function solvePart1() {
   const startTime = Date.now();
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
-  const schematic = dataSource === 'sample'
+  const gardenPlan = dataSource === 'sample'
     ? getSampleData()
     : getFullData();
   const useAnimation = !!document.getElementById('use-animation').checked
+
+  const seeds = gardenPlan.seeds.slice(0);
+
+  for (const plan of gardenPlan.maps) {
+    const ranges = buildRanges(plan.rangeLines);
+    for (let s = 0; s < seeds.length; s++) {
+      for (const r of ranges) {
+        if (r.sourceStart <= seeds[s] && seeds[s] <= r.sourceEnd) {
+          seeds[s] += r.offset;
+        }
+      }
+    }
+  }
+
+  console.log(seeds);
 
   const answerPart1 = 'TODO';
   document.getElementById('answer-part1').textContent = answerPart1;

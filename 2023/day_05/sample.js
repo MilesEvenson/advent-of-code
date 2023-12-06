@@ -5,14 +5,14 @@ function getSampleData() {
     maps: [
       {
         slug: 'seed-to-soil',
-        ranges: [
+        rangeLines: [
           '50 98 2',
           '52 50 48',
         ],
       },
       {
         slug: 'soil-to-fertilizer',
-        ranges: [
+        rangeLines: [
           '0 15 37',
           '37 52 2',
           '39 0 15',
@@ -20,7 +20,7 @@ function getSampleData() {
       },
       {
         slug: 'fertilizer-to-water',
-        ranges: [
+        rangeLines: [
           '49 53 8',
           '0 11 42',
           '42 0 7',
@@ -29,14 +29,14 @@ function getSampleData() {
       },
       {
         slug: 'water-to-light',
-        ranges: [
+        rangeLines: [
           '88 18 7',
           '18 25 70',
         ],
       },
       {
         slug: 'light-to-temperature',
-        ranges: [
+        rangeLines: [
           '45 77 23',
           '81 45 19',
           '68 64 13',
@@ -44,18 +44,19 @@ function getSampleData() {
       },
       {
         slug: 'temperature-to-humidity',
-        ranges: [
+        rangeLines: [
           '0 69 1',
           '1 0 69',
         ],
       },
       {
         slug: 'humidity-to-location',
-        ranges: [
+        rangeLines: [
           '60 56 37',
           '56 93 4',
         ],
       },
-  ],
+    ],
+  };
 };
 
