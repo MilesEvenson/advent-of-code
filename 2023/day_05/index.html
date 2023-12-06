@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<title>Day 5 | 2023</title>
+
+<style>
+</style>
+
+</head>
+
+
+
+<body>
+
+<!--
+
+Part 1
+-------
+
+Solution
+- build the maps
+  - some kind of data structure to handle
+    - sequence values
+    - unmapped "pass through" values
+
+
+Visualization
+Want some way to map the big numbers in the full input down
+to a smaller domain for decent visualization.
+
+We can easily display 64 columns.
+Could do 128 if the columns are narrow
+4px leaves plenty of space
+8px needs at least 1024px width
+
+The full input only has 20 seeds,
+so actually displaying each mapping (7 total in both sample and full)
+should be fine.
+
+
+
+Part 2
+-------
+
+-->
+
+<div id="container">
+  <h1>Day 5 - Planting seeds ... somewhere</h1>
+  <div class="controls">
+
+    <!-- Data source select -->
+    <div class="control-group">
+      <label for="data-source-sample">
+        <input
+          checked
+          id="data-source-sample"
+          name="data-source"
+          type="radio"
+          value="sample"
+        />
+        Sample
+      </label>
+      <label for="data-source-full">
+        <input
+          id="data-source-full"
+          name="data-source"
+          type="radio"
+          value="full"
+        />
+        Full
+      </label>
+    </div>
+    <div class="control-group">
+      <label for="use-animation">
+        <input
+          checked
+          id="use-animation"
+          name="use-animation"
+          type="checkbox"
+          value="on"
+        />
+        Animate?
+      </label>
+    </div>
+
+    <button id="solve-part1">Solve Part 1</button>
+    <button id="solve-part2">Solve Part 2</button>
+  </div>
+
+  <h2 id="answer-part1"></h2>
+  <h2 id="answer-part2"></h2>
+
+  <table class="visualization"><tbody></tbody></table>
+
+</div>
+
+
+<script src="data.js" type="text/javascript"></script>
+<script src="sample.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function reset() {
+  document.querySelector('#answer-part1').replaceChildren();
+  document.querySelector('#answer-part2').replaceChildren();
+  document.querySelector('.visualization tbody').replaceChildren();
+}
+
+
+function populateTable(data) {
+  let r = 0;
+  let c = 0;
+  for (const line of data) {
+    const row = document.createElement('tr');
+    c = 0;
+    for (const char of line) {
+      const cell = document.createElement('td');
+      cell.id = `cell-${r}-${c}`;
+      cell.textContent = char;
+      row.appendChild(cell);
+      c++;
+    }
+    document.querySelector('.visualization tbody').appendChild(row);
+    r++;
+  }
+}
+
+
+async function solvePart1() {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const schematic = dataSource === 'sample'
+    ? getSampleData()
+    : getFullData();
+  const useAnimation = !!document.getElementById('use-animation').checked
+
+  const answerPart1 = 'TODO';
+  document.getElementById('answer-part1').textContent = answerPart1;
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+
+async function solvePart2() {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const schematic = dataSource === 'sample'
+    ? getSampleData()
+    : getFullData();
+  const useAnimation = !!document.getElementById('use-animation').checked
+
+  const answerPart2 = 'TODO';
+  document.getElementById('answer-part2').textContent = answerPart2;
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.getElementById('solve-part1').addEventListener('click', () => {
+    reset();
+    solvePart1();
+  });
+  document.getElementById('solve-part2').addEventListener('click', () => {
+    reset();
+    solvePart2();
+  });
+});
+
+</script>
+
+</body>
+
+</html>
+
