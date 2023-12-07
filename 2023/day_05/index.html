@@ -149,20 +149,24 @@ async function solvePart1() {
 
   const seeds = gardenPlan.seeds.slice(0);
 
+  let mapped = false;
   for (const plan of gardenPlan.maps) {
     const ranges = buildRanges(plan.rangeLines);
     for (let s = 0; s < seeds.length; s++) {
+      mapped = false;
       for (const r of ranges) {
-        if (r.sourceStart <= seeds[s] && seeds[s] <= r.sourceEnd) {
+        if (r.sourceStart <= seeds[s] && seeds[s] < r.sourceEnd) {
           seeds[s] += r.offset;
+          mapped = true;
+          break;
         }
       }
     }
   }
 
-  console.log(seeds);
+  seeds.sort((a, b) => (a - b));
 
-  const answerPart1 = 'TODO';
+  const answerPart1 = seeds[0];
   document.getElementById('answer-part1').textContent = answerPart1;
   const endTime = Date.now();
   console.log(`runtime: ${endTime - startTime}`);
