@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<title>Day 8 | 2023</title>
+
+<style>
+
+#viz {
+  display: flex;
+  flex-direction: column;
+  width: 4em;
+}
+
+.step {
+  align-self: center;
+  padding: 0.5em;
+}
+
+.step .label {
+  background: white;
+  font-family: monospace;
+  padding: 0.2em 0.4em;
+}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<!--
+
+Part 1
+-------
+
+Solution
+
+while cur != z
+  op = instructions[i % len]
+  move to graph[cur][op]
+  i++
+
+
+Visualization
+
+The samples are small enough that the entire graph can be drawn.
+The full input has over 700 nodes, so I'll only draw the local area.
+
+What's a simple way to draw these nodes?
+
+Maybe always just draw cur node + 2 levels?
+
+          cur
+    c.l          c.r
+  l.l l.r      r.l r.r
+
+
+What if I showed the nodes traversed instead of drawing sets of nodes?
+I think I prefer that approach,
+especially given how many ops are in the full input (over 300).
+
+
+Could map the nodeId to hex and use that to color each node.
+AAA is black (#000000) and ZZZ is white (#ffffff)
+
+
+Part 2
+-------
+
+-->
+
+<div id="container">
+  <h1>Day 8</h1>
+  <div class="controls">
+
+    <!-- Data source select -->
+    <div class="control-group">
+      <label for="data-source-sample-one">
+        <input
+          checked
+          id="data-source-sample-one"
+          name="data-source"
+          type="radio"
+          value="sample-one"
+        />
+        Sample, One Pass
+      </label>
+
+      <label for="data-source-sample-loop">
+        <input
+          checked
+          id="data-source-sample-loop"
+          name="data-source"
+          type="radio"
+          value="sample-loop"
+        />
+        Sample, Loop
+      </label>
+
+      <label for="data-source-full">
+        <input
+          id="data-source-full"
+          name="data-source"
+          type="radio"
+          value="full"
+        />
+        Full
+      </label>
+    </div>
+    <div class="control-group">
+      <label for="use-animation">
+        <input
+          checked
+          id="use-animation"
+          name="use-animation"
+          type="checkbox"
+          value="on"
+        />
+        Animate?
+      </label>
+    </div>
+
+    <button id="solve-part1">Solve Part 1</button>
+    <button id="solve-part2">Solve Part 2</button>
+  </div>
+
+  <h2 id="answer-part1"></h2>
+  <h2 id="answer-part2"></h2>
+
+  <div id="viz"></div>
+
+</div>
+
+
+<script src="data.js" type="text/javascript"></script>
+<script src="sample.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function reset() {
+  document.getElementById('answer-part1').replaceChildren();
+  document.getElementById('answer-part2').replaceChildren();
+}
+
+
+function alpha2Hex(alpha) {
+  const digits = [];
+  let alphaRatio = 0.0;
+  for (let i = 0; i < alpha.length; i++) {
+    alphaRatio = (alpha.charCodeAt(i) - 65) / 26;
+    digits.push(alphaRatio * 256);
+  }
+  return digits.map(d => Math.floor(new Number(d)).toString(16)).join('');
+}
+
+
+function addNodeToPath(nodeId) { 
+  const step = document.createElement('div');
+  step.classList.add('step');
+  step.style.background = `#${alpha2Hex(nodeId)}`;
+
+  const label = document.createElement('span');
+  label.classList.add('label');
+  label.textContent = nodeId;
+
+  step.appendChild(label);
+  document.getElementById('viz').prepend(step);
+}
+
+
+async function solvePart1() {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const data = dataSource === 'sample-one'
+    ? getSampleOnePassData()
+    : dataSource === 'sample-loop'
+      ? getSampleLoopData()
+      : getFullData();
+  const useAnimation = !!document.getElementById('use-animation').checked;
+
+  const OPS = {
+    L: 0,
+    R: 1,
+  };
+
+
+  let i = 0;
+  let op = '';
+  let cur = 'AAA';
+  while (cur !== 'ZZZ') {
+    addNodeToPath(cur);
+    op = data.instructions[i % data.instructions.length];
+    cur = data.graph[cur][OPS[op]];
+    i++;
+    document.getElementById('answer-part1').textContent = `Steps: ${i}`;
+    if (useAnimation) {
+      await sleep(200);
+    }
+  }
+
+  addNodeToPath(cur);
+  document.getElementById('answer-part1').textContent = `Steps: ${i}`;
+
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+
+async function solvePart2() {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const schematic = dataSource === 'sample'
+    ? getSampleData()
+    : getFullData();
+  const useAnimation = !!document.getElementById('use-animation').checked
+
+  const answerPart2 = 'TODO';
+  document.getElementById('answer-part2').textContent = answerPart2;
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.getElementById('solve-part1').addEventListener('click', () => {
+    reset();
+    solvePart1();
+  });
+  document.getElementById('solve-part2').addEventListener('click', () => {
+    reset();
+    solvePart2();
+  });
+});
+
+</script>
+
+</body>
+
+</html>
+
