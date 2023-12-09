@@ -59,6 +59,8 @@ Could get through all ~200 cards in a couple minutes.
 Part 2
 -------
 
+Same core logic, but I need to track the count of copies per card (default 1)
+
 -->
 
 <div id="container">
@@ -183,7 +185,21 @@ function getWinnersPerCard(allCards) {
 }
 
 
-async function solvePart1() {
+function getCopiesPerCard(winnersPerCard) {
+  const copyCounts = new Array(winnersPerCard.length);
+  copyCounts.fill(1);
+  for (let i = 0; i < copyCounts.length; i++) {
+    // Each card has an array of boolean win/not-win values.
+    const wins = winnersPerCard[i].filter(b => b).length;
+    for (let k = i+1; k < copyCounts.length && k <= (i+wins); k++) {
+      copyCounts[k] += copyCounts[i];
+    }
+  }
+  return copyCounts;
+}
+
+
+async function solve(partId) {
   const startTime = Date.now();
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
   const allCards = dataSource === 'sample'
@@ -193,6 +209,9 @@ async function solvePart1() {
   populateTable(allCards);
 
   const winnersPerCard = getWinnersPerCard(allCards);
+  const copiesPerCard = partId === 2
+    ? getCopiesPerCard(winnersPerCard)
+    : [];
 
   const cardRows = document.querySelectorAll('.visualization tr');
   for (let i = 0; i < allCards.length; i++) {
@@ -207,24 +226,33 @@ async function solvePart1() {
     }
   }
 
-  const answerPart1 = winnersPerCard.reduce(
-    (sum, list) => {
-      const exp = list.reduce((count, isMatch) => (count + (isMatch ? 1 : 0)));
-      if (exp === 0) {
-        return sum;
-      }
-      return sum + Math.pow(2, exp-1);
-    },
-    0,
-  );
-  document.getElementById('answer-part1').textContent = `Total Points: ${answerPart1}`;
+  if (partId === 1) {
+    const answerPart1 = winnersPerCard.reduce(
+      (sum, list) => {
+        const exp = list.reduce((count, isMatch) => (count + (isMatch ? 1 : 0)));
+        if (exp === 0) {
+          return sum;
+        }
+        return sum + Math.pow(2, exp-1);
+      },
+      0,
+    );
+    document.getElementById('answer-part1').textContent = `Total Points: ${answerPart1}`;
+  } else {
+    const answerPart2 = copiesPerCard.reduce((sum, count) => (sum + count), 0);
+    document.getElementById('answer-part2').textContent = `Total Cards: ${answerPart2}`;
+  }
   const endTime = Date.now();
   console.log(`runtime: ${endTime - startTime}`);
 }
 
 
+async function solvePart1() {
+  solve(1);
+}
+
 async function solvePart2() {
-  console.warn('TODO: read and solve part 2');
+  solve(2);
 }
 
 
