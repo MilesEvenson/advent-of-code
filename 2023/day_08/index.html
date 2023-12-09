@@ -7,21 +7,37 @@
 
 <style>
 
-#viz {
+#viz.part1 {
   display: flex;
   flex-direction: column;
   width: 4em;
 }
 
-.step {
+#viz.part2 {
+  background: black;
+  border: 2px solid black;
+  display: flex;
+  flex-direction: row;
+  height: 200px;
+  width: 100%;
+}
+
+.part1 .step {
   align-self: center;
   padding: 0.5em;
 }
 
-.step .label {
+.part1 .step .label {
   background: white;
   font-family: monospace;
   padding: 0.2em 0.4em;
+}
+
+.part2 .step {
+  align-self: flex-end;
+  background: white;
+  min-height: 1px;
+  width: 1%;
 }
 
 </style>
@@ -71,6 +87,23 @@ AAA is black (#000000) and ZZZ is white (#ffffff)
 Part 2
 -------
 
+Solution
+
+Instead of a single pointer to the cur node, I need an array of pointers.
+Start by scanning all nodes and taking those with IDs lik: xxA.
+Loop over all nodes in the array, counting how many end up on a xxZ node.
+Paint
+
+^^^^ This was super duper not correct ^^^^
+
+Try to find a cycle for each starting node an then multiply together all values?
+How to identify a cycle?
+After processing at the same node-op tuple a second time.
+So track a set of `${node}-${opIndex}`
+
+record set of each 
+
+
 -->
 
 <div id="container">
@@ -92,7 +125,6 @@ Part 2
 
       <label for="data-source-sample-loop">
         <input
-          checked
           id="data-source-sample-loop"
           name="data-source"
           type="radio"
@@ -149,6 +181,8 @@ async function sleep(ms) {
 function reset() {
   document.getElementById('answer-part1').replaceChildren();
   document.getElementById('answer-part2').replaceChildren();
+  document.getElementById('viz').classList.remove('part1', 'part2');
+  document.getElementById('viz').replaceChildren();
 }
 
 
@@ -177,6 +211,12 @@ function addNodeToPath(nodeId) {
 }
 
 
+const OPS = {
+  L: 0,
+  R: 1,
+};
+
+
 async function solvePart1() {
   const startTime = Date.now();
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
@@ -187,11 +227,7 @@ async function solvePart1() {
       : getFullData();
   const useAnimation = !!document.getElementById('use-animation').checked;
 
-  const OPS = {
-    L: 0,
-    R: 1,
-  };
-
+  document.getElementById('viz').classList.add('part1');
 
   let i = 0;
   let op = '';
@@ -218,13 +254,61 @@ async function solvePart1() {
 async function solvePart2() {
   const startTime = Date.now();
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
-  const schematic = dataSource === 'sample'
-    ? getSampleData()
-    : getFullData();
-  const useAnimation = !!document.getElementById('use-animation').checked
+  const data = dataSource === 'full'
+    ? getFullData()
+    : getSamplePart2Data();
+  const useAnimation = !!document.getElementById('use-animation').checked;
 
-  const answerPart2 = 'TODO';
-  document.getElementById('answer-part2').textContent = answerPart2;
+  document.getElementById('viz').classList.add('part2');
+
+  const nodes = Object.keys(data.graph).filter(k => k[2] === 'A');
+
+  const nodePaths = nodes.reduce((obj, nid) => ({ ...obj, [nid]: new Set([]) }), {});
+  const nodeSteps = nodes.reduce((obj, nid) => ({ ...obj, [nid]: 0 }), {});
+  const cycleSteps = nodes.reduce((obj, nid) => ({ ...obj, [nid]: 0 }), {});
+
+  let cur = '';
+  let op = '';
+  let trackCycle = false;
+  for (const startId of nodes) {
+    trackCycle = false;
+    cur = startId;
+    while (true) {
+      if (cur[2] === 'Z') {
+        console.log(`Node ${startId} ends at step ${nodeSteps[startId]}`);
+        if (nodePaths[startId].has(`${cur}-${nodeSteps[startId] % data.instructions.length}`)) {
+          console.log(`  it has cycle of length ${cycleSteps[startId]}`);
+          break;
+        } else {
+          trackCycle = true;
+        }
+      }
+      op = data.instructions[nodeSteps[startId] % data.instructions.length];
+      nodePaths[startId].add(`${cur}-${nodeSteps[startId] % data.instructions.length}`);
+      nodeSteps[startId]++;
+      if (trackCycle) {
+        cycleSteps[startId]++;
+      }
+      cur = data.graph[cur][OPS[op]];
+    }
+  }
+
+  console.table(cycleSteps);
+
+  let cycleProduct = cycleSteps[nodes[0]];
+  for (let i = 1; i < nodes.length; i++) {
+    const smaller = Math.min(cycleProduct, cycleSteps[nodes[i]]);
+    const larger = Math.max(cycleProduct, cycleSteps[nodes[i]]);
+    if (larger % smaller === 0) {
+      cycleProduct = larger;
+    } else {
+      cycleProduct = smaller * larger;
+    }
+  }
+
+  const answerPart2 = cycleProduct;
+
+  document.getElementById('answer-part2').textContent = `Total Steps: ${answerPart2}`;
   const endTime = Date.now();
   console.log(`runtime: ${endTime - startTime}`);
 }
