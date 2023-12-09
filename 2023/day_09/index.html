@@ -39,7 +39,7 @@
 }
 
 #viz .highlight.painted.final {
-  animation: highlightFinal 200ms infinite linear;
+  animation: highlightFinal 200ms 6 linear;
   background: black;
   color: white;
 
@@ -165,7 +165,7 @@ function reset() {
 }
 
 
-function paintStack(stack) {
+function paintStack(stack, partId) {
   const tableRows = [];
   for (const seq of stack) {
     const row = document.createElement('tr');
@@ -177,12 +177,20 @@ function paintStack(stack) {
 
     const padding = stack[0].length - seq.length;
     for (let i = 0; i < padding; i++) {
-      row.prepend(document.createElement('td'));
+      if (partId === 1) {
+        row.prepend(document.createElement('td'));
+      } else {
+        row.appendChild(document.createElement('td'));
+      }
     }
 
     const highlightCell = document.createElement('td');
     highlightCell.classList.add('highlight');
-    row.appendChild(highlightCell);
+    if (partId === 1) {
+      row.appendChild(highlightCell);
+    } else {
+      row.prepend(highlightCell);
+    }
 
     tableRows.push(row);
   }
@@ -190,7 +198,7 @@ function paintStack(stack) {
 }
 
 
-async function paintHistoricalValues(stack) {
+async function paintHistoricalValues(stack, partId) {
   const highlightCells = document.querySelectorAll('#viz tbody td.highlight');
 
   let i = stack.length - 1;
@@ -199,14 +207,22 @@ async function paintHistoricalValues(stack) {
   return new Promise(resolve => {
     function paintCell(ts) {
       if (i === 0) {
-        highlightCells[0].textContent = stack[0][stack[0].length-1];
+        if (partId === 1) {
+          highlightCells[0].textContent = stack[0][stack[0].length-1];
+        } else {
+          highlightCells[0].textContent = stack[0][0];
+        }
         highlightCells[0].classList.add('final', 'painted');
         resolve();
       } else {
         const offset = ts - prev;
         // 60fps means 16.67ms per frame.
         if (16 < offset) {
-          highlightCells[i].textContent = stack[i][stack[i].length-1];
+          if (partId === 1) {
+            highlightCells[i].textContent = stack[i][stack[i].length-1];
+          } else {
+            highlightCells[i].textContent = stack[i][0];
+          }
           highlightCells[i].classList.add('painted');
           i--;
           prev = ts;
@@ -228,7 +244,7 @@ function clearStack() {
 }
 
 
-async function solvePart1() {
+async function solve(partId) {
   const startTime = Date.now();
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
   const data = dataSource === 'sample'
@@ -275,7 +291,7 @@ async function solvePart1() {
     }
 
     clearStack();
-    paintStack(stack);
+    paintStack(stack, partId);
 
     if (useAnimation) {
       await sleep(200);
@@ -286,22 +302,34 @@ async function solvePart1() {
       throw new Error('Bug in stack math');
     }
 
+    // Remember: the tip sequence is all zeroes. It doesn't matter if we
+    // prepend or append the additional zero before we start working backwards.
     stack[tip].push(0);
 
     while (1 <= tip) {
-      nextVal = stack[tip][stack[tip].length-1] + stack[tip-1][stack[tip-1].length-1];
-      stack[tip-1].push(nextVal);
+      if (partId === 1) {
+        nextVal = stack[tip][stack[tip].length-1] + stack[tip-1][stack[tip-1].length-1];
+        stack[tip-1].push(nextVal);
+      } else {
+        nextVal = stack[tip-1][0] - stack[tip][0];
+        stack[tip-1].unshift(nextVal);
+      }
       tip--;
     }
 
     await paintHistoricalValues(stack);
 
-    historicalValues.push(stack[0][stack[0].length-1]);
+    const indexToKeep = partId === 1
+      ? stack[0].length-1
+      : 0;
+    historicalValues.push(stack[0][indexToKeep]);
 
     if (useAnimation) {
       await sleep(600);
     }
   }
+
+  console.log(historicalValues);
 
   const answerPart1 = historicalValues.reduce(
     (sum, val) => (sum + val),
@@ -312,19 +340,13 @@ async function solvePart1() {
   console.log(`runtime: ${endTime - startTime}`);
 }
 
+async function solvePart1() {
+  solve(1);
+}
+
 
 async function solvePart2() {
-  const startTime = Date.now();
-  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
-  const schematic = dataSource === 'sample'
-    ? getSampleData()
-    : getFullData();
-  const useAnimation = !!document.getElementById('use-animation').checked;
-
-  const answerPart2 = 'TODO';
-  document.getElementById('answer-part2').textContent = answerPart2;
-  const endTime = Date.now();
-  console.log(`runtime: ${endTime - startTime}`);
+  solve(2);
 }
 
 
