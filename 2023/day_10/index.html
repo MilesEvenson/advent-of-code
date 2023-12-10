@@ -24,10 +24,14 @@
 }
 
 .path {
-  color: #ccc;
+  background: #000;
+  color: #eee;
+  width: 0.8em;
 }
 
 .searcher {
+  /* Obviously this is dumb */
+  background: white !important;
   color: black;
 }
 
@@ -37,6 +41,22 @@
 
 .searcher.bravo {
   font-weight: bold;
+}
+
+.torch0 {
+  background: hsl(44deg 90% 60%);
+}
+
+.torch1 {
+  background: hsl(44deg 70% 45%);
+}
+
+.torch2 {
+  background: hsl(44deg 50% 30%);
+}
+
+.torch3 {
+  background: hsl(44deg 30% 15%);
 }
 
 
@@ -247,9 +267,71 @@ function paintSearcher(prev, cur, name) {
   const curCell = document.getElementById(coordsToCellId(cur));
   prevCell.textContent = prevCell.dataset.val;
   prevCell.classList.remove(name, 'searcher');
+  prevCell.classList.add('dark', 'path');
   curCell.textContent = name[0];
   curCell.classList.add(name, 'searcher');
   curCell.classList.remove('dark');
+}
+
+
+function paintTorch(coords, steps) {
+  let torchClass = '';
+  switch (steps % 4) {
+    case 0:
+      torchClass = 'torch';
+      break;
+    case 1:
+      torchClass = 'torch-1';
+      break;
+    case 2:
+      torchClass = 'torch-2';
+      break;
+    case 3:
+      torchClass = 'torch-1';
+      break;
+    default:
+      break;
+  }
+  const cell = document.getElementById(coordsToCellId(coords));
+  cell.classList.add(torchClass);
+}
+
+
+function setTorch(coords) {
+  // A torch illuminates ALL surrounding cells.
+  const ringRanges = [
+                [ 0 ],
+            [ -1, 0, 1 ],
+        [ -2, -1, 0, 1, 2 ],
+    [ -3, -2, -1, 0, 1, 2, 3 ],
+  ];
+
+  let ring = 0;
+  for (const range of ringRanges) {
+    for (const rowOffset of range) {
+      for (const colOffset of range) {
+        const row = coords[0] + rowOffset;
+        const col = coords[1] + colOffset;
+        if (row < 0 || col < 0) {
+          continue;
+        }
+        const cell = document.getElementById(coordsToCellId([row, col]));
+        // Update the cell if its coords are inside the bounds of the grid,
+        // and either:
+        //  - it isn't illuminated by any torch, or
+        //  - it would be *more* illuminated by this torch than its current torch.
+        if (cell && (
+          !('torchRing' in cell.dataset)
+            || ring < parseInt(cell.dataset.torchRing, 10)
+        )) {
+          cell.dataset.torchRing = ring;
+          cell.classList.remove('torch0', 'torch1', 'torch2', 'torch3');
+          cell.classList.add(`torch${ring}`);
+        }
+      }
+    }
+    ring++;
+  }
 }
 
 
@@ -275,7 +357,6 @@ async function solve(partId) {
 
   paintTable(grid);
 
-
   const getOptionsForCoords = (r, c) => ({
     N: ((0 < r) ? grid[r-1][c] : '.'),
     E: ((c < grid[0].length-1) ? grid[r][c+1] : '.'),
@@ -291,6 +372,10 @@ async function solve(partId) {
   if (exits.length !== 2) {
     console.error('Unexpected number of exits from the starting room:', exits);
     throw new Error('Expected exactly 2 exits');
+  }
+
+  if (dataSource === 'full') {
+    setTorch([startRow, startCol]);
   }
 
   let alphaPrev = [startRow, startCol];
@@ -322,7 +407,10 @@ async function solve(partId) {
     && !sameCoords(alpha, bravoPrev)
   ) {
     if (useAnimation) {
-      await sleep(200);
+      const sleepMs = dataSource === 'full'
+        ? 50
+        : 200;
+      await sleep(sleepMs);
     }
     alphaEntryDir = getEntryDir(alphaPrev, alpha);
     bravoEntryDir = getEntryDir(bravoPrev, bravo);
@@ -346,6 +434,11 @@ async function solve(partId) {
 
     paintSearcher(alphaPrev, alpha, 'alpha');
     paintSearcher(bravoPrev, bravo, 'bravo');
+
+    if (dataSource === 'full' && alphaSteps % 8 === 0) {
+      setTorch(alphaPrev);
+      setTorch(bravoPrev);
+    }
 
     alphaSteps++;
     bravoSteps++;
