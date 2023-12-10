@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<title>Day 10 | 2023</title>
+
+<style>
+
+.grid {
+  border-spacing: 0;
+  font-family: monospace;
+  table-layout: fixed;
+}
+
+.dark {
+  background: #000;
+  color: #333;
+  width: 0.8em;
+}
+
+.start {
+  color: yellow;
+}
+
+.path {
+  color: #ccc;
+}
+
+.searcher {
+  color: black;
+}
+
+.searcher.alpha {
+  font-style: italic;
+}
+
+.searcher.bravo {
+  font-weight: bold;
+}
+
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<!--
+
+Part 1
+-------
+
+Solution
+
+- identify exit options from starting cell
+- start 2 searchers (yellow, red)
+- when searchers meet => farthest point!
+  - remember to test for both odd and even length loops
+
+
+
+Visualization
+
+Draw full grid
+dark text on dark background
+each searcher has a "torch" effect that illuminates surrounding cells
+(8? 12?)
+path after visit is clear (black on white?)
+
+
+
+Part 2
+-------
+
+-->
+
+<div id="container">
+  <h1>Day 10</h1>
+  <div class="controls">
+
+    <!-- Data source select -->
+    <div class="control-group">
+      <label for="data-source-sample-simple">
+        <input
+          checked
+          id="data-source-sample-simple"
+          name="data-source"
+          type="radio"
+          value="sample-simple"
+        />
+        Simple
+      </label>
+      <label for="data-source-sample-medium">
+        <input
+          id="data-source-sample-medium"
+          name="data-source"
+          type="radio"
+          value="sample-medium"
+        />
+        Medium
+      </label>
+      <label for="data-source-full">
+        <input
+          id="data-source-full"
+          name="data-source"
+          type="radio"
+          value="full"
+        />
+        Full
+      </label>
+    </div>
+    <div class="control-group">
+      <label for="use-animation">
+        <input
+          checked
+          id="use-animation"
+          name="use-animation"
+          type="checkbox"
+          value="on"
+        />
+        Animate?
+      </label>
+    </div>
+
+    <button id="solve-part1">Solve Part 1</button>
+    <button id="solve-part2">Solve Part 2</button>
+  </div>
+
+  <h2 id="answer">Solution:</h2>
+
+  <table id="viz" class="grid"><tbody></tbody></table>
+
+</div>
+
+
+<script src="data.js" type="text/javascript"></script>
+<script src="sample.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function reset() {
+  document.getElementById('answer').textContent = 'Solution';
+  document.getElementById('viz').classList.remove('full', 'sample');
+  document.querySelector('#viz tbody').replaceChildren();
+}
+
+
+function paintTable(grid) {
+  for (let r = 0; r < grid.length; r++) {
+    const row = document.createElement('tr');
+    for (let c = 0; c < grid[r].length; c++) {
+      const cell = document.createElement('td');
+      cell.id = `cell-${r}-${c}`;
+      cell.classList.add('dark');
+      if (grid[r][c] === 'S') {
+        cell.classList.add('start');
+      }
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.dataset.val = grid[r][c];
+      cell.textContent = grid[r][c];
+      row.appendChild(cell);
+    }
+    document.querySelector('#viz tbody').appendChild(row);
+  }
+}
+
+
+function getStartCoords(grid) {
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      if (grid[r][c] === 'S') {
+        return [r, c];
+      }
+    }
+  }
+}
+
+
+function getOffsetForDir(dir) {
+  const map = {
+    N:  [ -1,  0 ],
+    E:  [  0,  1 ],
+    S:  [  1,  0 ],
+    W:  [  0, -1 ],
+  };
+  return map[dir];
+}
+
+
+function getExits(options) {
+  const doorMap = {
+    N:  '|7F',
+    E:  '-J7',
+    S:  '|LJ',
+    W:  '-LF',
+  };
+
+  return Object.keys(options)
+    .filter(dir => (doorMap[dir].indexOf(options[dir]) !== -1))
+    .map(getOffsetForDir);
+}
+
+
+function getExitDir(val, entryDir) {
+  const map = {
+    '|': { 'N': 'S', 'S': 'N' },
+    '-': { 'W': 'E', 'E': 'W' },
+    'L': { 'N': 'E', 'E': 'N' },
+    'J': { 'N': 'W', 'W': 'N' },
+    '7': { 'S': 'W', 'W': 'S' },
+    'F': { 'E': 'S', 'S': 'E' },
+  };
+
+  return map[val][entryDir];
+}
+
+
+function getEntryDir(prev, cur) {
+  const map = {
+    '1,0':  'N',
+    '0,-1': 'E',
+    '-1,0': 'S',
+    '0,1':  'W',
+  };
+  const rowDiff = cur[0] - prev[0];
+  const colDiff = cur[1] - prev[1];
+  return map[`${rowDiff},${colDiff}`];
+}
+
+
+function coordsToCellId(coords) {
+  return `cell-${coords[0]}-${coords[1]}`;
+}
+
+
+function paintSearcher(prev, cur, name) {
+  const prevCell = document.getElementById(coordsToCellId(prev));
+  const curCell = document.getElementById(coordsToCellId(cur));
+  prevCell.textContent = prevCell.dataset.val;
+  prevCell.classList.remove(name, 'searcher');
+  curCell.textContent = name[0];
+  curCell.classList.add(name, 'searcher');
+  curCell.classList.remove('dark');
+}
+
+
+function sameCoords(alpha, bravo) {
+  return alpha[0] === bravo[0] && alpha[1] === bravo[1];
+}
+
+
+async function solve(partId) {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const grid = dataSource === 'full'
+    ? getFullData()
+    : dataSource === 'sample-simple'
+      ? getSimpleSampleData()
+      : getMediumSampleData();
+  const useAnimation = !!document.getElementById('use-animation').checked;
+
+  const dataSourceClass = dataSource === 'full'
+    ? 'full'
+    : 'sample';
+  document.getElementById('viz').classList.add(dataSourceClass);
+
+  paintTable(grid);
+
+
+  const getOptionsForCoords = (r, c) => ({
+    N: ((0 < r) ? grid[r-1][c] : '.'),
+    E: ((c < grid[0].length-1) ? grid[r][c+1] : '.'),
+    S: ((r < grid.length-1) ? grid[r+1][c] : '.'),
+    W: ((0 < c) ? grid[r][c-1] : '.'),
+  });
+
+
+  const [ startRow, startCol ] = getStartCoords(grid);
+  const startingOptions = getOptionsForCoords(startRow, startCol);
+  const exits = getExits(startingOptions);
+
+  if (exits.length !== 2) {
+    console.error('Unexpected number of exits from the starting room:', exits);
+    throw new Error('Expected exactly 2 exits');
+  }
+
+  let alphaPrev = [startRow, startCol];
+  let bravoPrev = [startRow, startCol];
+  let alpha = [
+    startRow + exits[0][0],
+    startCol + exits[0][1],
+  ];
+  let bravo = [
+    startRow + exits[1][0],
+    startCol + exits[1][1],
+  ];
+
+  paintSearcher(alphaPrev, alpha, 'alpha');
+  paintSearcher(bravoPrev, bravo, 'bravo');
+
+  let alphaEntryDir = '';
+  let bravoEntryDir = '';
+  let alphaExitDir = '';
+  let bravoExitDir = '';
+  let alphaOffsets = [];
+  let bravoOffsets = [];
+
+  let alphaSteps = 1;
+  let bravoSteps = 1;
+
+  while (!sameCoords(alpha, bravo)
+    && !sameCoords(alphaPrev, bravo)
+    && !sameCoords(alpha, bravoPrev)
+  ) {
+    if (useAnimation) {
+      await sleep(200);
+    }
+    alphaEntryDir = getEntryDir(alphaPrev, alpha);
+    bravoEntryDir = getEntryDir(bravoPrev, bravo);
+    console.log('alpha entered from:', alphaEntryDir);
+    console.log('bravo entered from:', bravoEntryDir);
+
+    alphaExitDir = getExitDir(grid[alpha[0]][alpha[1]], alphaEntryDir);
+    bravoExitDir = getExitDir(grid[bravo[0]][bravo[1]], bravoEntryDir);
+    console.log('alpha will exit to:', alphaExitDir);
+    console.log('bravo will exit to:', bravoExitDir);
+
+    alphaPrev = [...alpha];
+    bravoPrev = [...bravo];
+
+    alphaOffsets = getOffsetForDir(alphaExitDir);
+    alpha[0] += alphaOffsets[0];
+    alpha[1] += alphaOffsets[1];
+    bravoOffsets = getOffsetForDir(bravoExitDir);
+    bravo[0] += bravoOffsets[0];
+    bravo[1] += bravoOffsets[1];
+
+    paintSearcher(alphaPrev, alpha, 'alpha');
+    paintSearcher(bravoPrev, bravo, 'bravo');
+
+    alphaSteps++;
+    bravoSteps++;
+  }
+
+  let answerPart1 = alphaSteps;
+  if (!sameCoords(alpha, bravo)
+    && (sameCoords(alphaPrev, bravo) || sameCoords(alpha, bravoPrev))
+  ) {
+    answerPart1--;
+  }
+
+  document.getElementById('answer').textContent = `Solution: ${answerPart1}`;
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+async function solvePart1() {
+  solve(1);
+}
+
+
+async function solvePart2() {
+  document.getElementById('answer').textContent = 'TODO';
+}
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.getElementById('solve-part1').addEventListener('click', () => {
+    reset();
+    solvePart1();
+  });
+  document.getElementById('solve-part2').addEventListener('click', () => {
+    reset();
+    solvePart2();
+  });
+});
+
+</script>
+
+</body>
+
+</html>
+
