@@ -209,8 +209,23 @@ function expand(smallGrid) {
   let c = 0;
   // Second pass - generate the expanded grid
   for (let r = 0; r < smallGrid.length; r++) {
-    for (let c = 0; c < smallGrid[r].length; c++) {
+    const row = [];
+    if (rowHasStars[r]) {
+      for (let c = 0; c < smallGrid[r].length; c++) {
+        if (!colHasStars[c]) {
+          row.push('.');
+        }
+        row.push(smallGrid[r][c]);
+      }
+    } else {
+      // Fill the row with empty space, including every expanded column.
+      for (let c = 0; c < (smallGrid[r].length + precedingEmptyCols[precedingEmptyCols.length-1]); c++) {
+        row.push('.');
+      }
+      // Push a copy of this empty row.
+      grid.push(row.slice(0));
     }
+    grid.push(row);
   }
 
 
