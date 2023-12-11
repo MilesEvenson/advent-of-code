@@ -7,14 +7,36 @@
 
 <style>
 
-.grid {
-  border-spacing: 0;
-  font-family: monospace;
-  table-layout: fixed;
+body {
+  display: flex;
+  justify-content: space-around;
+  margin: 0;
+  padding: 0;
 }
 
-.star {
-  font-weight: bold;
+#container {
+  margin: 0 auto;
+  width: 95%;
+}
+
+.histogram {
+  align-items: flex-end;
+  background: black;
+  border: 4px solid black;
+  display: flex;
+  height: 400px;
+  justify-content: space-evenly;
+  width: 100%;
+}
+
+.bar {
+  background: white;
+  flex-grow: 1;
+  min-height: 2px;
+}
+
+.bar:hover {
+  background: silver;
 }
 
 </style>
@@ -30,32 +52,23 @@
 Part 1
 -------
 
+Guesses
+18622273    too high
+
 Solution
 
 Two steps
 - Expand the grid
 - Identify paths
 
-There are 440 stars in my full input.
-I think dynamic programming is a viable approach here.
+There are 440 stars in my full input, so 96,580 unordered star pairs.
 
-There are 96,580 unordered star pairs on the full map.
-Is it worth calculating all those distances before starting the search?
-I don't *think* so.
-I don't think pure greedy algorithm is guaranteed to be ideal here.
+(( restarting because this is MUCH SIMPLER than Traveling Salesman ))
 
-I think I need to search exhaustively for a solution.
-
-And the distance calculation is just arithmetic,
-so precalculation doesn't reduce time complexity.
-
-
-For the expansion, I think I want to *actually* expand the grid in-memory.
-I think it will simplify writing and debugging this solution.
-
-Do an initial scan to identify all rows and cols that need doubling
-(i.e. determine the final dimensions of the grid)
-Then do a second pass to fully populate the grid.
+I think this is just loop over half the full matrix of pairs?
+  for i in stars
+    for k < i in stars
+      calc distance
 
 
 Distance Calculation
@@ -66,10 +79,10 @@ LOVE IT
 
 Visualization
 
-- show a spinner while calculating
-- animate path from star-to-star after it's determined
-  - probably want to scale down to 0.5x to fit on the screen
-
+I don't know.
+I guess generate a histogram of distances?
+It's *something*
+Not sure what else to do for 100,000 values.
 
 
 
@@ -123,7 +136,7 @@ Part 2
 
   <h2 id="answer">Solution:</h2>
 
-  <table id="viz" class="grid"><tbody></tbody></table>
+  <div id="viz" class="histogram"></div>
 
 </div>
 
@@ -141,31 +154,7 @@ async function sleep(ms) {
 function reset() {
   document.getElementById('answer').textContent = 'Solution';
   document.getElementById('viz').classList.remove('full', 'sample');
-  document.querySelector('#viz tbody').replaceChildren();
-}
-
-
-function coordsToCellId(coords) {
-  return `cell-${coords[0]}-${coords[1]}`;
-}
-
-
-function paintTable(grid) {
-  for (let r = 0; r < grid.length; r++) {
-    const row = document.createElement('tr');
-    for (let c = 0; c < grid[r].length; c++) {
-      const cell = document.createElement('td');
-      cell.id = coordsToCellId([r, c]);
-      cell.dataset.row = r;
-      cell.dataset.col = c;
-      if (grid[r][c] === '#') {
-        cell.classList.add('star');
-      }
-      cell.textContent = grid[r][c];
-      row.appendChild(cell);
-    }
-    document.querySelector('#viz tbody').appendChild(row);
-  }
+  document.querySelector('#viz').replaceChildren();
 }
 
 
@@ -228,8 +217,32 @@ function expand(smallGrid) {
     grid.push(row);
   }
 
-
   return grid;
+}
+
+
+function calcDistance(src, dest) {
+  return (Math.abs(src[0] - dest[0]) + Math.abs(src[1] - dest[1]));
+}
+
+
+function paintHistogram(data) {
+  const maxHeight = Math.ceil(1.2 * Object.values(data).reduce((max, val) => Math.max(max, val), 0));
+  const maxVal = Math.ceil(1.2 * Object.keys(data).reduce((max, val) => Math.max(max, val), 0));
+  let bar = null;
+  let ratio = 0.0;
+  // Peeked at part 1 results to get this number.
+  for (let distance = 1; distance < maxVal; distance++) {
+    bar = document.createElement('div');
+    bar.classList.add('bar');
+    ratio = 0.0;
+    if (distance in data) {
+      ratio = data[distance] / maxHeight;
+    }
+    bar.style.height = `${(ratio * 400)}px`;
+    bar.title = `${data[distance]} pairs have distance ${distance}`;
+    document.getElementById('viz').appendChild(bar);
+  }
 }
 
 
@@ -245,11 +258,36 @@ async function solve(partId) {
 
   const grid = expand(rawGrid);
 
-  paintTable(grid);
+  // build array of all star coords
+  const stars = [];
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      if (grid[r][c] === '#') {
+        stars.push([r, c]);
+      }
+    }
+  }
 
+  let pairDistance = 0;
+  let totalDistance = 0; 
+  const histogram = {};
 
+  for (let i = 0; i < stars.length; i++) {
+    for (let k = 0; k < i && k < stars.length; k++) {
+      pairDistance = calcDistance(stars[i], stars[k]);
+      totalDistance += pairDistance;
+      if (!(`${pairDistance}` in histogram)) {
+        histogram[`${pairDistance}`] = 0;
+      }
+      histogram[`${pairDistance}`]++;
+    }
+  }
 
-  const answerPart1 = 'TODO';
+  console.log('histogram:', histogram);
+
+  paintHistogram(histogram);
+  
+  const answerPart1 = totalDistance;
 
   document.getElementById('answer').textContent = `Solution: ${answerPart1}`;
   const endTime = Date.now();
