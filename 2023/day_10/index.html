@@ -300,13 +300,24 @@ function paintTorch(coords, steps) {
 function setTorch(coords) {
   // A torch illuminates ALL surrounding cells.
   const ringRanges = [
-                [ 0 ],
             [ -1, 0, 1 ],
         [ -2, -1, 0, 1, 2 ],
     [ -3, -2, -1, 0, 1, 2, 3 ],
   ];
 
-  let ring = 0;
+  const torchCell = document.getElementById(coordsToCellId(coords));
+  if (torchCell && (
+    !('torchRing' in torchCell.dataset)
+      || 2 < parseInt(torchCell.dataset.torchRing, 10)
+  )) {
+    torchCell.dataset.torchRing = 0;
+    torchCell.classList.remove('torch0', 'torch1', 'torch2', 'torch3');
+    torchCell.classList.add('torch0');
+  } else {
+    return false;
+  }
+
+  let ring = 1;
   for (const range of ringRanges) {
     for (const rowOffset of range) {
       for (const colOffset of range) {
@@ -315,23 +326,24 @@ function setTorch(coords) {
         if (row < 0 || col < 0) {
           continue;
         }
-        const cell = document.getElementById(coordsToCellId([row, col]));
-        // Update the cell if its coords are inside the bounds of the grid,
+        const ringCell = document.getElementById(coordsToCellId([row, col]));
+        // Update the ringCell if its coords are inside the bounds of the grid,
         // and either:
         //  - it isn't illuminated by any torch, or
         //  - it would be *more* illuminated by this torch than its current torch.
-        if (cell && (
-          !('torchRing' in cell.dataset)
-            || ring < parseInt(cell.dataset.torchRing, 10)
+        if (ringCell && (
+          !('torchRing' in ringCell.dataset)
+            || ring < parseInt(ringCell.dataset.torchRing, 10)
         )) {
-          cell.dataset.torchRing = ring;
-          cell.classList.remove('torch0', 'torch1', 'torch2', 'torch3');
-          cell.classList.add(`torch${ring}`);
+          ringCell.dataset.torchRing = ring;
+          ringCell.classList.remove('torch0', 'torch1', 'torch2', 'torch3');
+          ringCell.classList.add(`torch${ring}`);
         }
       }
     }
     ring++;
   }
+  return true;
 }
 
 
@@ -401,6 +413,8 @@ async function solve(partId) {
 
   let alphaSteps = 1;
   let bravoSteps = 1;
+  let alphaSetTorchNext = false;
+  let bravoSetTorchNext = false;
 
   while (!sameCoords(alpha, bravo)
     && !sameCoords(alphaPrev, bravo)
@@ -435,9 +449,11 @@ async function solve(partId) {
     paintSearcher(alphaPrev, alpha, 'alpha');
     paintSearcher(bravoPrev, bravo, 'bravo');
 
-    if (dataSource === 'full' && alphaSteps % 8 === 0) {
-      setTorch(alphaPrev);
-      setTorch(bravoPrev);
+    if (dataSource === 'full' && (alphaSetTorchNext || alphaSteps % 8 === 0)) {
+      alphaSetTorchNext = !setTorch(alphaPrev);
+    }
+    if (dataSource === 'full' && (bravoSetTorchNext || bravoSteps % 8 === 0)) {
+      bravoSetTorchNext = !setTorch(bravoPrev);
     }
 
     alphaSteps++;
