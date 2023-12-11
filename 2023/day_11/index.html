@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<title>Day 11 | 2023</title>
+
+<style>
+
+.grid {
+  border-spacing: 0;
+  font-family: monospace;
+  table-layout: fixed;
+}
+
+.star {
+  font-weight: bold;
+}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<!--
+
+Part 1
+-------
+
+Solution
+
+Two steps
+- Expand the grid
+- Identify paths
+
+There are 440 stars in my full input.
+I think dynamic programming is a viable approach here.
+
+There are 96,580 unordered star pairs on the full map.
+Is it worth calculating all those distances before starting the search?
+I don't *think* so.
+I don't think pure greedy algorithm is guaranteed to be ideal here.
+
+I think I need to search exhaustively for a solution.
+
+And the distance calculation is just arithmetic,
+so precalculation doesn't reduce time complexity.
+
+
+For the expansion, I think I want to *actually* expand the grid in-memory.
+I think it will simplify writing and debugging this solution.
+
+Do an initial scan to identify all rows and cols that need doubling
+(i.e. determine the final dimensions of the grid)
+Then do a second pass to fully populate the grid.
+
+
+Distance Calculation
+Looks like this is simply |r1 - r2| + |c1 - c2|
+LOVE IT
+
+
+
+Visualization
+
+- show a spinner while calculating
+- animate path from star-to-star after it's determined
+  - probably want to scale down to 0.5x to fit on the screen
+
+
+
+
+Part 2
+-------
+
+-->
+
+<div id="container">
+  <h1>Day 11</h1>
+  <div class="controls">
+
+    <!-- Data source select -->
+    <div class="control-group">
+      <label for="data-source-sample">
+        <input
+          checked
+          id="data-source-sample"
+          name="data-source"
+          type="radio"
+          value="sample"
+        />
+        Simple
+      </label>
+      <label for="data-source-full">
+        <input
+          id="data-source-full"
+          name="data-source"
+          type="radio"
+          value="full"
+        />
+        Full
+      </label>
+    </div>
+    <div class="control-group">
+      <label for="use-animation">
+        <input
+          checked
+          id="use-animation"
+          name="use-animation"
+          type="checkbox"
+          value="on"
+        />
+        Animate?
+      </label>
+    </div>
+
+    <button id="solve-part1">Solve Part 1</button>
+    <button id="solve-part2">Solve Part 2</button>
+  </div>
+
+  <h2 id="answer">Solution:</h2>
+
+  <table id="viz" class="grid"><tbody></tbody></table>
+
+</div>
+
+
+<script src="data.js" type="text/javascript"></script>
+<script src="sample.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function reset() {
+  document.getElementById('answer').textContent = 'Solution';
+  document.getElementById('viz').classList.remove('full', 'sample');
+  document.querySelector('#viz tbody').replaceChildren();
+}
+
+
+function coordsToCellId(coords) {
+  return `cell-${coords[0]}-${coords[1]}`;
+}
+
+
+function paintTable(grid) {
+  for (let r = 0; r < grid.length; r++) {
+    const row = document.createElement('tr');
+    for (let c = 0; c < grid[r].length; c++) {
+      const cell = document.createElement('td');
+      cell.id = coordsToCellId([r, c]);
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      if (grid[r][c] === '#') {
+        cell.classList.add('star');
+      }
+      cell.textContent = grid[r][c];
+      row.appendChild(cell);
+    }
+    document.querySelector('#viz tbody').appendChild(row);
+  }
+}
+
+
+function expand(smallGrid) {
+  const rowHasStars = new Array(smallGrid.length);
+  rowHasStars.fill(false);
+  const colHasStars = new Array(smallGrid[0].length);
+  colHasStars.fill(false);
+
+  // First pass - identify rows and cols to double
+  for (let r = 0; r < smallGrid.length; r++) {
+    for (let c = 0; c < smallGrid.length; c++) {
+      if (smallGrid[r][c] === '#') {
+        rowHasStars[r] = true;
+        colHasStars[c] = true;
+      }
+    }
+  }
+
+  const precedingEmptyRows = [0];
+  for (let r = 1; r < smallGrid.length; r++) {
+    if (rowHasStars[r-1]) {
+      precedingEmptyRows.push(precedingEmptyRows[r-1]);
+    } else {
+      precedingEmptyRows.push(1 + precedingEmptyRows[r-1]);
+    }
+  }
+  const precedingEmptyCols = [0];
+  for (let r = 1; r < smallGrid.length; r++) {
+    if (colHasStars[r-1]) {
+      precedingEmptyCols.push(precedingEmptyCols[r-1]);
+    } else {
+      precedingEmptyCols.push(1 + precedingEmptyCols[r-1]);
+    }
+  }
+
+  console.log('expand() build prefix lists:', precedingEmptyRows, precedingEmptyCols);
+
+  const grid = [];
+  let r = 0;
+  let c = 0;
+  // Second pass - generate the expanded grid
+  for (let r = 0; r < smallGrid.length; r++) {
+    for (let c = 0; c < smallGrid[r].length; c++) {
+    }
+  }
+
+
+  return grid;
+}
+
+
+async function solve(partId) {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const rawGrid = dataSource === 'full'
+    ? getFullData()
+    : getSampleData();
+  const useAnimation = !!document.getElementById('use-animation').checked;
+
+  document.getElementById('viz').classList.add(dataSource);
+
+  const grid = expand(rawGrid);
+
+  paintTable(grid);
+
+
+
+  const answerPart1 = 'TODO';
+
+  document.getElementById('answer').textContent = `Solution: ${answerPart1}`;
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+async function solvePart1() {
+  solve(1);
+}
+
+
+async function solvePart2() {
+  document.getElementById('answer').textContent = 'TODO';
+}
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.getElementById('solve-part1').addEventListener('click', () => {
+    reset();
+    solvePart1();
+  });
+  document.getElementById('solve-part2').addEventListener('click', () => {
+    reset();
+    solvePart2();
+  });
+});
+
+</script>
+
+</body>
+
+</html>
+
