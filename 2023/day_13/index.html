@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<title>Day 13 | 2023</title>
+
+<style>
+
+.grid {
+  border-spacing: 0;
+  font-family: monospace;
+  table-layout: fixed;
+}
+
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<!--
+
+Part 1
+-------
+
+Answers
+34368   too high
+32281   too high
+31987   too high
+31727   ??? (later learne too low)
+
+
+Solution
+
+I guess outside-in?
+"far" pointer for the matching row/col
+start at max side, step in if needed (we only work on even folds)
+while cells match
+  continue
+if full-match
+  step near/far in 1
+
+scan rows for horizontal fold
+scan cols for vertical fold
+
+
+
+Visualization
+
+
+
+Part 2
+-------
+
+-->
+
+<div id="container">
+  <h1>Day 13</h1>
+  <div class="controls">
+
+    <!-- Data source select -->
+    <div class="control-group">
+      <label for="data-source-sample-vertical">
+        <input
+          checked
+          id="data-source-sample-vertical"
+          name="data-source"
+          type="radio"
+          value="sample-vertical"
+        />
+        Vertical Fold
+      </label>
+      <label for="data-source-sample-horizontal">
+        <input
+          id="data-source-sample-horizontal"
+          name="data-source"
+          type="radio"
+          value="sample-horizontal"
+        />
+        Horizontal Fold
+      </label>
+      <label for="data-source-full">
+        <input
+          id="data-source-full"
+          name="data-source"
+          type="radio"
+          value="full"
+        />
+        Full
+      </label>
+    </div>
+    <div class="control-group">
+      <label for="use-animation">
+        <input
+          id="check-index"
+          name="check-index"
+          type="number"
+          value="-1"
+        />
+        Full Data Index
+      </label>
+    </div>
+    <div class="control-group">
+      <label for="use-animation">
+        <input
+          id="use-animation"
+          name="use-animation"
+          type="checkbox"
+          value="on"
+        />
+        Animate?
+      </label>
+    </div>
+
+    <button id="solve-part1">Solve Part 1</button>
+    <button id="solve-part2">Solve Part 2</button>
+  </div>
+
+  <h2 id="answer">Solution:</h2>
+
+  <table id="viz" class="grid"><tbody></tbody></table>
+
+</div>
+
+
+<script src="data.js" type="text/javascript"></script>
+<script src="sample.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function reset() {
+  document.getElementById('answer').textContent = 'Solution';
+  document.getElementById('viz').classList.remove('full', 'sample');
+  document.querySelector('#viz tbody').replaceChildren();
+}
+
+
+function paintTable(grid) {
+  for (let r = 0; r < grid.length; r++) {
+    const row = document.createElement('tr');
+    for (let c = 0; c < grid[r].length; c++) {
+      const cell = document.createElement('td');
+      cell.id = `cell-${r}-${c}`;
+      cell.classList.add('dark');
+      if (grid[r][c] === 'S') {
+        cell.classList.add('start');
+      }
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.dataset.val = grid[r][c];
+      cell.textContent = grid[r][c];
+      row.appendChild(cell);
+    }
+    document.querySelector('#viz tbody').appendChild(row);
+  }
+}
+
+
+function slug(chars) {
+  return chars.join('');
+}
+
+
+function arraysMatch(left, right) {
+  if (left?.length !== right?.length || (!left && !right)) {
+    return false;
+  }
+  for (let i = 0; i < left.length; i++) {
+    if (left[i] !== right[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+function getCol(grid, c) {
+  const arr = [];
+  for (let r = 0; r < grid.length; r++) {
+    if (c < grid[r].length) {
+      arr.push(grid[r][c]);
+    }
+  }
+  return arr;
+}
+
+
+async function solve(partId) {
+  const startTime = Date.now();
+  const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
+  const allGrids = dataSource === 'full'
+    ? getFullData()
+    : dataSource === 'sample-vertical'
+      ? getSampleVeticalData()
+      : getSampleHorizontalData();
+  const useAnimation = !!document.getElementById('use-animation').checked;
+
+  const checkIndex = parseInt(
+    document.getElementById('check-index').value,
+    10,
+  );
+
+  const dataSourceClass = dataSource === 'full'
+    ? 'full'
+    : 'sample';
+  document.getElementById('viz').classList.add(dataSourceClass);
+
+  //paintTable(grid);
+
+  const folds = [];
+
+  let maxRowFold = 0;
+  let maxColFold = 0;
+
+  let baseRow = 0;
+  let homeRow = 0;
+  let awayRow = 0;
+ 
+  let baseCol = 0;
+  let homeCol = 0;
+  let awayCol = 0;
+
+  let matchLines = 0;
+
+  if (checkIndex !== -1) {
+    const spliceLength = allGrids.length - checkIndex - 1;
+    allGrids.splice((checkIndex+1), spliceLength);
+    allGrids.splice(0, checkIndex);
+  }
+
+  console.log(allGrids);
+
+  for (const grid of allGrids) {
+    maxRowFold = 0;
+    maxColFold = 0;
+    // scan forward through rows until one has an even number of matches
+    baseRow = 0;
+    while (baseRow < grid.length - 1) {
+      homeRow = baseRow;
+      awayRow = homeRow + 1;
+      matchLines = 0;
+      while (0 <= homeRow && awayRow < grid.length) {
+        if (!arraysMatch(grid[homeRow], grid[awayRow])) {
+          break;
+        }
+        matchLines++;
+        homeRow--;
+        awayRow++;
+      }
+      if (0 < matchLines
+        && (homeRow === -1 || awayRow === grid.length)
+        && maxRowFold < (baseRow + 1)
+      ) {
+        maxRowFold = baseRow + 1;
+      }
+      baseRow++;
+    }
+    
+    if (maxRowFold === 0) {
+      // scan cols for vertical fold
+      baseCol = 0;
+      while (baseCol < grid[0].length - 1) {
+        homeCol = baseCol;
+        awayCol = homeCol + 1;
+        matchLines = 0;
+        while (0 <= homeCol && awayCol < grid[0].length) {
+          if (!arraysMatch(getCol(grid, homeCol), getCol(grid, awayCol))) {
+            break;
+          }
+          matchLines++;
+          homeCol--;
+          awayCol++;
+        }
+        if (0 < matchLines
+          && (homeCol === -1 || awayCol === grid[0].length)
+          && maxColFold < (baseCol + 1)
+        ) {
+          maxColFold = baseCol + 1;
+        }
+        baseCol++;
+      }
+    }
+
+    folds.push({ rowFold: maxRowFold, colFold: maxColFold });
+  }
+
+  console.log(folds);
+
+  const rowTotal = 100 * folds.reduce((sum, { rowFold }) => (sum + rowFold), 0);
+  const colTotal = folds.reduce((sum, { colFold }) => (sum + colFold), 0);
+
+  let answerPart1 = rowTotal + colTotal;
+
+  document.getElementById('answer').textContent = `Solution: ${answerPart1}`;
+  const endTime = Date.now();
+  console.log(`runtime: ${endTime - startTime}`);
+}
+
+async function solvePart1() {
+  solve(1);
+}
+
+
+async function solvePart2() {
+  document.getElementById('answer').textContent = 'TODO';
+}
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.getElementById('solve-part1').addEventListener('click', () => {
+    reset();
+    solvePart1();
+  });
+  document.getElementById('solve-part2').addEventListener('click', () => {
+    reset();
+    solvePart2();
+  });
+});
+
+</script>
+
+</body>
+
+</html>
+
