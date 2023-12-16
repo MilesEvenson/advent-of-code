@@ -246,6 +246,50 @@ function getSurroundingCoords(coords, maxRow, maxCol) {
 }
 
 
+function paintScan(coords, neighbors) {
+  let i = 0
+  let prev = 0;
+  let foundSymbol = false;
+
+  const toClear = []
+
+  function paintCell(ts) {
+    if (foundSymbol || neighbors.length <= i) {
+      toClear.forEach(cell => cell.classList.remove('scan'));
+      if (!foundSymbol) {
+        coords.forEach(([r, c]) => document.getElementById(`cell-${r}-${c}`).classList.replace('cursor', 'ignore'));
+      }
+      return;
+    }
+    const offset = ts - prev;
+    // 60fps means 16.67ms per frame.
+    if (16 < offset) {
+      const cell = document.getElementById(`cell-${neighbors[i][0]}-${neighbors[i][1]}`);
+      toClear.push(cell);
+
+      if (!isDigit(cell.textContent) && cell.textContent !== '.') {
+        cell.classList.remove('cursor');
+        cell.classList.remove('scan');
+        cell.classList.add('symbol');
+        foundSymbol = true;
+      } else {
+        cell.classList.add('scan');
+      }
+      i++
+      prev = ts;
+    }
+    requestAnimationFrame(paintCell);
+  }
+
+  function firstFrame(ts) {
+    prev = ts;
+    paintCell(ts);
+  }
+
+  requestAnimationFrame(firstFrame);
+}
+
+
 async function solvePart1() {
   const startTime = Date.now();
   const dataSource = document.querySelector('#container [name="data-source"]:checked').value;
@@ -255,6 +299,24 @@ async function solvePart1() {
   const useAnimation = !!document.getElementById('use-animation').checked
   populateTable(schematic);
 
+  let prevPaint = Date.now();
+
+  const paintCursor = (pcts, paintRow, paintCol) => {
+    const pctsOffset = Date.now() - pcts;
+    if (16 < pctsOffset) {
+      const cell = document.getElementById(`cell-${r}-${c}`)
+      cell.classList.add('cursor');
+      prevPaint = Date.now();
+    }
+    requestAnimationFrame(pcts);
+  };
+
+
+  // TODO: use requestAnimationFrame() to paint the cursor, OR be more specific with CSS animations
+  //let lastPaint = Date.now();
+  //const cursorAddCoords = [];
+  //const cursorRemoveCoords = [];
+
   let runningSum = 0
   const partNumbers = [];
   let coords = [];
@@ -263,11 +325,13 @@ async function solvePart1() {
     coords = [];
     digits = [];
     for (let c = 0; c < schematic[r].length; c++) {
-      const cell = document.getElementById(`cell-${r}-${c}`)
+      //cursorAddCoords.push([r, c]);
+
+      const cell = document.getElementById(`cell-${r}-${c}`);
       cell.classList.add('cursor');
 
       if (useAnimation) {
-        await sleep(100);
+        await sleep(10);
       }
 
       if (isDigit(schematic[r][c])) {
@@ -277,45 +341,27 @@ async function solvePart1() {
       if (!isDigit(schematic[r][c]) || c === schematic[r].length-1) {
         if (!isDigit(schematic[r][c])) {
           cell.classList.remove('cursor');
+          //cursorRemoveCoords.push([r, c]);
         }
 
         if (digits.length) {
           // identify surrounding coords
           const neighbors = getSurroundingCoords(coords, schematic.length-1, schematic[r].length-1);
+          if (useAnimation) {
+            paintScan(coords, neighbors);
+          }
           let foundSymbol = false;
           for (const [nr, nc] of neighbors) {
-            const n = document.getElementById(`cell-${nr}-${nc}`);
             if (!isDigit(schematic[nr][nc]) && schematic[nr][nc] !== '.') {
-              n.classList.remove('cursor');
-              n.classList.remove('scan');
-              n.classList.add('symbol');
               foundSymbol = true;
-              if (useAnimation) {
-                await sleep(50);
-              }
               break;
-            } else {
-              if (!isDigit(schematic[nr][nc]) && useAnimation) {
-                n.classList.add('scan');
-              }
             }
-            if (useAnimation) {
-              await sleep(50);
-            }
-          }
-          if (useAnimation) {
-            document.querySelectorAll('.visualization .scan')
-              .forEach(node => node.classList.remove('scan'));
-            await sleep(10);
           }
 
           if (foundSymbol) {
+            runningSum += parseInt(digits.join(''), 10);
+            document.getElementById('answer-part1').textContent = `Sum: ${runningSum}`;
             partNumbers.push(parseInt(digits.join(''), 10));
-          } else {
-            for (const [r,c] of coords) {
-              document.getElementById(`cell-${r}-${c}`).classList.remove('cursor');
-              document.getElementById(`cell-${r}-${c}`).classList.add('ignore');
-            }
           }
           coords = [];
           digits = [];
