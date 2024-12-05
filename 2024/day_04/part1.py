@@ -48,41 +48,84 @@ def solve(grid):
     # scan all 8 neighbors
     # extend in proper direction
 
-    chars = set(['X', 'M', 'A', 'S'])
-    visited = set([])
-    queue = []
-
-    # TODO -    some kind of generic "check direction"
-    #           takes offset (0 for x, 1 for m, etc)
-    #           takes tuples "step left" and "step_right"
-
-    def count_words(row, col):
-        c = grid[row][col]
-        count = 0
-        if c == 'X':
-            pass
-        elif c == 'M':
-            pass
-        elif c == 'A':
-            pass
-        elif c == 'S':
-            pass
-        else:
-            print('Unknonw char ({}) at [{}, {}]'.format(c, row, col))
-        return count
+    # More fun to do multi-axis search?
+    # I don't want to do Islands again
+    # O(4N) is like O(N) (plus O(1) in space)
 
     result = 0
+
     for r in range(len(grid)):
-        for c in range(len(grid)):
-            if '-'.join(grid[r][c]) in visited:
-                continue
-            if grid[r][c] in chars:
-                queue.append([r,c])
-            while len(queue):
-                [row, col] = queue.pop(0)
-                if '-'.join(grid[row][col]) in visited:
-                    continue
-                result += count_words(row, col)
+        for c in range(len(grid[r])-3):
+            match_forwards = (
+                grid[r][c] == 'X'
+                and grid[r][c+1] == 'M'
+                and grid[r][c+2] == 'A'
+                and grid[r][c+3] == 'S')
+            match_backwards = (
+                grid[r][c] == 'S'
+                and grid[r][c+1] == 'A'
+                and grid[r][c+2] == 'M'
+                and grid[r][c+3] == 'X')
+            if match_forwards:
+                result += 1
+            if match_backwards:
+                result += 1
+
+    for c in range(len(grid[0])):
+        for r in range(len(grid)-3):
+            match_forwards = (
+                grid[r][c] == 'X'
+                and grid[r+1][c] == 'M'
+                and grid[r+2][c] == 'A'
+                and grid[r+3][c] == 'S')
+            match_backwards = (
+                grid[r][c] == 'S'
+                and grid[r+1][c] == 'A'
+                and grid[r+2][c] == 'M'
+                and grid[r+3][c] == 'X')
+            if match_forwards:
+                result += 1
+            if match_backwards:
+                result += 1
+
+    # What is len of diagonal?
+    # Do we need to know the diagonal?
+    # It's still 4 chars up or down
+    # So instead of diag, just need to check r AND c
+
+    for r in range(len(grid)-3):
+        for c in range(len(grid[r])-3):
+            match_forwards = (
+                grid[r][c] == 'X'
+                and grid[r+1][c+1] == 'M'
+                and grid[r+2][c+2] == 'A'
+                and grid[r+3][c+3] == 'S')
+            match_backwards = (
+                grid[r][c] == 'S'
+                and grid[r+1][c+1] == 'A'
+                and grid[r+2][c+2] == 'M'
+                and grid[r+3][c+3] == 'X')
+            if match_forwards:
+                result += 1
+            if match_backwards:
+                result += 1
+
+    for r in range(len(grid)-3):
+        for c in reversed(range(3, len(grid[r]))):
+            match_forwards = (
+                grid[r][c] == 'X'
+                and grid[r+1][c-1] == 'M'
+                and grid[r+2][c-2] == 'A'
+                and grid[r+3][c-3] == 'S')
+            match_backwards = (
+                grid[r][c] == 'S'
+                and grid[r+1][c-1] == 'A'
+                and grid[r+2][c-2] == 'M'
+                and grid[r+3][c-3] == 'X')
+            if match_forwards:
+                result += 1
+            if match_backwards:
+                result += 1
 
     return result
 
