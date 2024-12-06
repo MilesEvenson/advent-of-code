@@ -57,61 +57,27 @@ def load_data(target):
     return [rules, updates]
 
 
-def sort_topological(pairs):
-    heads = set([])
-    rest = set([])
-    outbound = {}
+def pairs2graphs(pairs):
     inbound = {}
-    for p in pairs:
-        if p[0] not in outbound:
-            outbound[p[0]] = set([])
-        outbound[p[0]].add(p[1])
-        if p[1] not in outbound:
-            outbound[p[1]] = set([])
+    outbound = {}
 
+    for p in pairs:
         if p[0] not in inbound:
             inbound[p[0]] = set([])
         if p[1] not in inbound:
             inbound[p[1]] = set([])
+
+        if p[0] not in outbound:
+            outbound[p[0]] = set([])
+        if p[1] not in outbound:
+            outbound[p[1]] = set([])
+
         inbound[p[1]].add(p[0])
+        outbound[p[0]].add(p[1])
 
-        # Prep heads for topo sort
-        if p[0] not in rest and p[0] not in heads:
-            heads.add(p[0])
-        if p[1] in heads:
-            heads.remove(p[1])
-        rest.add(p[1])
-
-    print('==========')
-
-    #pp.pprint(outbound)
-    #pp.pprint(inbound)
-    print('out')
-    for p in outbound:
-        print('{}: {}'.format(p, len(outbound[p])))
-    print('in')
-    for p in inbound:
-        print('{}: {}'.format(p, len(inbound[p])))
-    pp.pprint(heads)
-
-    # I think this is a good impl?
-    #   https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm
-    result = []
-    while heads:
-        n = heads.pop()
-        result.append(n)
-        #print('head is {}'.format(n))
-        #print('    will touch Ms: {}'.format(outbound[n]))
-        for m in outbound[n]:
-            if n not in inbound[m]:
-                print('m({}) is not referenced by n({})'.format(m,n))
-                pp.pprint(inbound)
-                raise KeyError()
-            inbound[m].remove(n)
-            if len(inbound[m]) == 0:
-                heads.add(m)
-                del inbound[m]
-    return result
+    return {
+        'in': inbound,
+        'outbount': outbound }
 
 
 def solve(rules, all_updates):
@@ -122,18 +88,22 @@ def solve(rules, all_updates):
     #   build dict of { page: set(following_pages) }
     #   for each page in update
 
-    # Proper topo doesn't apply here. Must adjust
+    # Strict topo doesn't apply here. Must adjust
+    # Every page is 24 in and 24 out
 
-    ordering = sort_topological(rules)
-    pp.pprint(ordering)
-    pages = set(ordering)
+
+    graphs = pairs2graphs(rules)
+
     lookup = {}
-    for p in ordering:
-        pages.remove(p)
-        lookup[p] = pages.copy()
+    for pd in graphs['in']:
+        for ps in graphs['in'][pd]:
+            if not ps in lookup:
+                lookup[ps] = set([])
+            if not pd in lookup:
+                lookup[pd] = set([])
+            lookup[ps].add(pd)
 
     correct_updates = []
-
     for update in all_updates:
         items = set(update)
         valid = True
