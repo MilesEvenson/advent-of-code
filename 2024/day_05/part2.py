@@ -1,5 +1,6 @@
 import os
 
+from functools import cmp_to_key
 from math import floor
 from pprint import PrettyPrinter
 
@@ -101,18 +102,24 @@ def solve(rules, all_updates):
                 updates_needed.append(update)
                 break
 
-    for seq in updates_needed:
-        # At start, we don't know correct order of seq
-        # ...
-
+    def compare(a, b):
+        if b in lookup[a]:
+            return -1
+        if a in lookup[b]:
+            return 1
+        return 0
 
     result = 0
-    for update in correct_updates:
-        if len(update) % 2 == 1:
-            result += update[floor(len(update)/2)]
+    for update in updates_needed:
+        # Sort by lookup
+        fixed = sorted(update, key=cmp_to_key(compare))
+        if len(fixed) % 2 == 1:
+            result += fixed[floor(len(fixed)/2)]
         else:
-            print('update {} has an even number of items'.format(update))
-            raise ValueError('')
+            print('update {} has an even number of items'.format(fixed))
+            raise ValueError(
+                'update {} has an even number of items'.format(fixed))
+
     return result
 
 
