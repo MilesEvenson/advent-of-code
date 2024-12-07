@@ -1,6 +1,5 @@
 import os
 
-from math import ceil
 from math import floor
 from math import log10
 from pprint import PrettyPrinter
@@ -46,41 +45,32 @@ def load_data(target):
 def solve(data):
 
     def dp(target, nums, depth):
-        spaces = ''.join([' ' for _ in range(2*depth)])
-        print('{}{} <= {}'.format(spaces, target, nums))
         if len(nums) == 2:
             if target == nums[0] + nums[1]:
-                print('  {}{} + {}'.format(spaces, nums[0], nums[1]))
                 return target
             elif target == nums[0] * nums[1]:
-                print('  {}{} * {}'.format(spaces, nums[0], nums[1]))
                 return target
             elif str(target) == '{}{}'.format(nums[0], nums[1]):
-                print('  {}{} || {}'.format(spaces, nums[0], nums[1]))
                 return target
             else:
                 return -1
 
         if target % nums[-1] == 0:
-            print('{}divide {} by {}'.format(spaces, target, nums[-1]))
             target_mult = int(target / nums[-1])
             dig_mult = dp(target_mult, nums[:-1], depth+1)
             if target_mult == dig_mult:
                 return target
 
-        factor = 10
-        if 1 < nums[-1]:
-            factor = pow(10, ceil(log10(nums[-1])))
+        exp = 1 + floor(log10(nums[-1]))
+        factor = pow(10, exp)
         if nums[-1] < target \
             and target == (factor * floor(target / factor)) + nums[-1]:
             target_join = floor(target / factor)
-            print('{}split {} to {} || {}'.format(spaces, target, target_join, nums[-1]))
             dig_join = dp(target_join, nums[:-1], depth+1)
             if target_join == dig_join:
                 return target
 
         if nums[-1] < target:
-            print('{}subtract {} - {}'.format(spaces, target, nums[-1]))
             target_add = target - nums[-1]
             dig_add = dp(target_add, nums[:-1], depth+1)
             if target_add == dig_add:
@@ -93,10 +83,6 @@ def solve(data):
     for eq in data:
         if eq[0] == dp(eq[0], eq[1], 0):
             values.append(eq[0])
-            print('>>> {}\n'.format(eq[0]))
-        else:
-            print('xxx\n')
-            #pass
 
     #pp.pprint(values)
 
