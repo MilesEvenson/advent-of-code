@@ -64,32 +64,22 @@ def load_data(target):
 
 
 def get_nodes(a, b):
-    rd = abs(a[0] - b[0])
-    cd = abs(a[1] - b[1])
+    rda = a[0] - b[0]
+    cda = a[1] - b[1]
 
-    p_north = [-1, -1]
-    p_south = [-1, -1]
+    rdb = b[0] - a[0]
+    cdb = b[1] - a[1]
 
-    if a[0] <= b[0]:
-        p_north[0] = a[0] - rd
-        p_south[0] = b[0] + rd
-        if a[1] <= b[1]:
-            p_north[1] = a[1] - cd
-            p_south[1] = b[1] + cd
-        else:
-            p_north[1] = a[1] + cd
-            p_south[1] = b[1] - cd
-    else:
-        p_north[0] = b[0] - rd
-        p_south[0] = a[0] + rd
-        if a[1] <= b[1]:
-            p_north[1] = b[1] - cd
-            p_south[1] = a[1] + cd
-        else:
-            p_north[1] = b[1] + cd
-            p_south[1] = a[1] - cd
-
-    return [p_north, p_south]
+    return [
+        [
+            a[0] + rda,
+            a[1] + cda,
+        ],
+        [
+            b[0] + rdb,
+            b[1] + cdb,
+        ],
+    ]
 
 
 def p2k(point):
