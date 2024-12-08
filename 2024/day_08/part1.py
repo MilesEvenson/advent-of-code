@@ -100,34 +100,17 @@ def solve(grid):
                     sources[grid[r][c]] = []
                 sources[grid[r][c]].append([r, c])
 
-    marks = [['.' for _ in row] for row in grid]
-    overlay = [row.copy() for row in grid]
-
     node_points = set([])
-    #print('Found {} distinct frequencies'.format(len(sources.keys())))
     for f, towers in sources.items():
-        #print('Frequency {} has towers: {}'.format(f, towers))
         for i in range(len(towers)):
             for j in range(i+1, len(towers)):
                 nodes = get_nodes(towers[i], towers[j])
-                #print('towers {} {} can have nodes at {}'.format(
-                #    towers[i], towers[j], nodes))
                 if 0 <= nodes[0][0] < len(grid) \
                     and 0 <= nodes[0][1] < len(grid[0]):
                         node_points.add(p2k(nodes[0]))
-                        marks[nodes[0][0]][nodes[0][1]] = '#'
-                        overlay[nodes[0][0]][nodes[0][1]] = '#'
                 if 0 <= nodes[1][0] < len(grid) \
                     and 0 <= nodes[1][1] < len(grid[0]):
                         node_points.add(p2k(nodes[1]))
-                        marks[nodes[1][0]][nodes[1][1]] = '#'
-                        overlay[nodes[1][0]][nodes[1][1]] = '#'
-
-    #   for r in range(len(grid)):
-    #       print('{}    {}'.format(''.join(grid[r]), ''.join(marks[r])))
-    #   print('\n\n')
-    #   for row in overlay:
-    #       print(''.join(row))
 
     return len(node_points)
 
