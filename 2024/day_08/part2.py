@@ -79,50 +79,26 @@ T.........
 
 # need rowmax and colmax
 def get_nodes(a, b, rowmax, colmax):
-    rd = abs(a[0] - b[0])
-    cd = abs(a[1] - b[1])
+    # hold array of all points
+    # loop off a while in bounds
+    # loop off b while in bounds
+    points = []
 
-    # hold arrays of north/south points
-    # loop north until r < 0 or c < 0 or len == c
-    # loop south until len == r or c < 0 or len == c
-    points = [a.copy(), b.copy()]
-
-    row = min(a[0], b[0])
-    col = -1
-    if a[0] <= b[0]:
-        col = a[1]
-        if a[1] <= b[1]:
-            cd = -1 * cd
-    else:
-        col = b[1]
-        if b[1] <= a[1]:
-            cd = -1 * cd
-    #print('looping north from [{}, {}] with deltas ({}, {})'.format(
-    #    row, col, rd, cd))
-    # loop north
-    while 0 <= row and 0 <= col < colmax:
+    rda = a[0] - b[0]
+    cda = a[1] - b[1]
+    [row, col] = a
+    while 0 <= row < rowmax and 0 <= col < colmax:
         points.append([row, col])
-        col += cd
-        row -= rd
+        row += rda
+        col += cda
 
-    row = max(a[0], b[0])
-    col = -1
-    cd = abs(a[1] - b[1])
-    if a[0] <= b[0]:
-        col = b[1]
-        if b[1] <= a[1]:
-            cd = -1 * cd
-    else:
-        col = a[1]
-        if a[1] <= b[1]:
-            cd = -1 * cd
-    #print('looping south from [{}, {}] with deltas ({}, {})'.format(
-    #    row, col, rd, cd))
-    # loop south
-    while row < rowmax and 0 <= col < colmax:
+    rdb = b[0] - a[0]
+    cdb = b[1] - a[1]
+    [row, col] = b
+    while 0 <= row < rowmax and 0 <= col < colmax:
         points.append([row, col])
-        col += cd
-        row += rd
+        row += rdb
+        col += cdb
 
     return points
 
