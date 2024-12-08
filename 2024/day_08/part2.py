@@ -121,29 +121,15 @@ def solve(grid):
                     sources[grid[r][c]] = []
                 sources[grid[r][c]].append([r, c])
 
-    marks = [['.' for _ in row] for row in grid]
-    overlay = [row.copy() for row in grid]
-
     rowmax = len(grid)
     colmax = len(grid[0])
     node_points = set([])
     for f, towers in sources.items():
-        #print('Frequency {} has towers: {}'.format(f, towers))
         for i in range(len(towers)):
             for j in range(i+1, len(towers)):
                 nodes = get_nodes(towers[i], towers[j], rowmax, colmax)
-                #print('towers {} {} can have nodes at {}'.format(
-                #    towers[i], towers[j], nodes))
                 for n in nodes:
                     node_points.add(p2k(n))
-                    marks[n[0]][n[1]] = '#'
-                    overlay[n[0]][n[1]] = '#'
-
-    #   for r in range(len(grid)):
-    #       print('{}    {}'.format(''.join(grid[r]), ''.join(marks[r])))
-    #print('\n\n')
-    #for row in overlay:
-    #    print(''.join(row))
 
     return len(node_points)
 
